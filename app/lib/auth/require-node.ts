@@ -2,8 +2,8 @@ import 'server-only';
 
 import { eq } from 'drizzle-orm';
 
-import { db } from '@/app/lib/db/client';
 import { extractBearerToken, hashNodeToken } from '@/app/lib/auth/node-tokens';
+import { db } from '@/app/lib/db/client';
 import { nodes, type Node } from '@/db/schema';
 
 export async function requireNodeFromRequest(request: Request): Promise<Node> {
@@ -19,6 +19,10 @@ export async function requireNodeFromRequest(request: Request): Promise<Node> {
 
   if (!node) {
     throw new Error('Invalid node token');
+  }
+
+  if (node.status !== 'active') {
+    throw new Error('Node is disabled');
   }
 
   return node;
