@@ -12,6 +12,7 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
+    "@neondatabase/auth": "^0.2.0-beta.1",
     "drizzle-orm": "^0.45.1",
     "next": "16.2.1",
     "postgres": "^3.4.8",

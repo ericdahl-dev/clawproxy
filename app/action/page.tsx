@@ -1,6 +1,8 @@
 import { sql } from '@/app/lib/db';
 import { revalidatePath } from 'next/cache';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ActionPage() {
   async function createComment(formData: FormData) {
     'use server';
