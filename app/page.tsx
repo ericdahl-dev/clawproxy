@@ -1,3 +1,5 @@
+import { Button } from '@/components/ui/button';
+
 const proofPoints = [
   'Built for OpenClaw',
   'Self-hostable',
@@ -50,17 +52,26 @@ export const dynamic = 'force-dynamic';
 
 export default function Home() {
   return (
-    <main className="min-h-screen overflow-hidden bg-[#07111f] text-white">
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,_rgba(45,212,191,0.16),_transparent_30%),radial-gradient(circle_at_top_right,_rgba(99,102,241,0.22),_transparent_34%),linear-gradient(180deg,_#07111f_0%,_#0a1528_52%,_#07111f_100%)]" />
-      <div className="absolute left-1/2 top-24 -z-10 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full bg-cyan-400/10 blur-3xl" />
+    <main className="text-foreground bg-brand-page min-h-screen overflow-hidden">
+      <div
+        className="absolute inset-0 -z-10"
+        style={{
+          background: `
+            radial-gradient(circle at top left, color-mix(in oklab, var(--color-brand-accent) 22%, transparent), transparent 32%),
+            radial-gradient(circle at top right, color-mix(in oklab, var(--color-brand-accent-muted) 90%, transparent), transparent 36%),
+            linear-gradient(180deg, var(--color-brand-page), var(--color-card), var(--color-brand-page))
+          `,
+        }}
+      />
+      <div className="bg-brand-accent-muted absolute top-24 left-1/2 -z-10 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full blur-3xl" />
 
       <section className="mx-auto flex w-full max-w-7xl flex-col px-6 pb-24 pt-8 sm:px-10 lg:px-12">
         <header className="flex items-center justify-between gap-4 py-4">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.32em] text-cyan-200/85">
+            <p className="text-brand-accent text-sm font-semibold tracking-[0.32em] uppercase">
               clawproxy
             </p>
-            <p className="mt-1 text-sm text-white/55">
+            <p className="text-muted-foreground mt-1 text-sm">
               Public webhook ingress for private OpenClaw nodes
             </p>
           </div>
@@ -68,22 +79,23 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <a
               href="https://github.com/openclaw/openclaw"
-              className="hidden rounded-full border border-white/12 px-4 py-2 text-sm text-white/80 transition hover:bg-white/8 sm:inline-flex"
+              className="border-border text-foreground/85 hover:bg-muted/50 hidden rounded-full border px-4 py-2 text-sm transition sm:inline-flex"
             >
               OpenClaw
             </a>
-            <a
-              href="/dashboard"
-              className="rounded-full bg-cyan-300 px-5 py-2 text-sm font-semibold text-slate-950 shadow-sm shadow-cyan-400/30 transition hover:bg-cyan-200"
+            <Button
+              asChild
+              size="lg"
+              className="rounded-full px-5 shadow-md shadow-black/20"
             >
-              Dashboard
-            </a>
+              <a href="/dashboard">Dashboard</a>
+            </Button>
           </div>
         </header>
 
         <section className="grid items-center gap-16 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:py-24">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center rounded-full border border-cyan-300/20 bg-cyan-300/10 px-4 py-2 text-sm font-medium text-cyan-100 shadow-lg shadow-cyan-950/20 backdrop-blur">
+            <div className="border-brand-accent/25 bg-brand-accent/10 text-brand-accent inline-flex items-center rounded-full border px-4 py-2 text-sm font-medium shadow-lg shadow-black/25 backdrop-blur">
               Stop exposing ports just to receive webhooks
             </div>
 
@@ -91,32 +103,35 @@ export default function Home() {
               Webhooks for private nodes.
             </h1>
 
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-white/72 sm:text-xl">
+            <p className="text-muted-foreground mt-6 max-w-2xl text-lg leading-8 sm:text-xl">
               Accept webhook traffic from the public internet, store it durably,
               and deliver it to your OpenClaw node over authenticated outbound
               pull. No public node exposure required.
             </p>
 
             <div className="mt-10 flex flex-wrap gap-4">
-              <a
-                href="/dashboard"
-                className="rounded-full bg-cyan-300 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200"
+              <Button
+                asChild
+                size="lg"
+                className="rounded-full px-6 py-3 text-sm font-semibold shadow-md shadow-black/20"
               >
-                Get started
-              </a>
-              <a
-                href="#how-it-works"
-                className="rounded-full border border-white/12 bg-white/6 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                <a href="/dashboard">Get started</a>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="rounded-full border-border/80 bg-card/30 px-6 py-3 text-sm font-semibold backdrop-blur"
               >
-                See how it works
-              </a>
+                <a href="#how-it-works">See how it works</a>
+              </Button>
             </div>
 
             <div className="mt-10 flex flex-wrap gap-3">
               {proofPoints.map((item) => (
                 <span
                   key={item}
-                  className="rounded-full border border-white/10 bg-white/6 px-4 py-2 text-sm text-white/72"
+                  className="border-border text-muted-foreground rounded-full border bg-card/40 px-4 py-2 text-sm"
                 >
                   {item}
                 </span>
@@ -125,12 +140,12 @@ export default function Home() {
           </div>
 
           <div className="relative">
-            <div className="absolute inset-0 rounded-[2rem] bg-gradient-to-br from-cyan-300/20 via-transparent to-indigo-400/18 blur-2xl" />
-            <div className="relative rounded-[2rem] border border-white/10 bg-white/8 p-4 shadow-2xl shadow-black/30 backdrop-blur-xl md:p-6">
-              <div className="rounded-[1.6rem] border border-white/10 bg-[#08101d]/90 p-5">
-                <div className="flex items-center justify-between gap-4 border-b border-white/8 pb-4">
+            <div className="from-brand-accent/20 to-chart-2/15 absolute inset-0 rounded-[2rem] bg-gradient-to-br via-transparent blur-2xl" />
+            <div className="border-border bg-card/50 relative rounded-[2rem] border p-4 shadow-2xl shadow-black/30 backdrop-blur-xl md:p-6">
+              <div className="border-border bg-card/95 rounded-[1.6rem] border p-5">
+                <div className="border-border flex items-center justify-between gap-4 border-b pb-4">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-200/80">
+                    <p className="text-brand-accent text-xs font-semibold tracking-[0.28em] uppercase">
                       Live flow
                     </p>
                     <h2 className="mt-2 text-xl font-semibold">From provider to private node</h2>
@@ -161,30 +176,30 @@ export default function Home() {
                   ].map((item, index) => (
                     <div
                       key={item.title}
-                      className="flex gap-4 rounded-2xl border border-white/8 bg-white/5 p-4"
+                      className="border-border bg-card/60 flex gap-4 rounded-2xl border p-4"
                     >
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-cyan-300 font-semibold text-slate-950">
+                      <div className="bg-primary text-primary-foreground flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-semibold">
                         {index + 1}
                       </div>
                       <div>
-                        <h3 className="font-medium text-white">{item.title}</h3>
-                        <p className="mt-1 text-sm leading-6 text-white/65">{item.body}</p>
+                        <h3 className="font-medium">{item.title}</h3>
+                        <p className="text-muted-foreground mt-1 text-sm leading-6">{item.body}</p>
                       </div>
                     </div>
                   ))}
                 </div>
 
                 <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-2xl border border-white/8 bg-white/5 p-4">
-                    <p className="text-xs uppercase tracking-[0.24em] text-white/45">Mode</p>
+                  <div className="border-border bg-card/50 rounded-2xl border p-4">
+                    <p className="text-muted-foreground text-xs tracking-[0.24em] uppercase">Mode</p>
                     <p className="mt-2 text-lg font-semibold">Pull-based</p>
                   </div>
-                  <div className="rounded-2xl border border-white/8 bg-white/5 p-4">
-                    <p className="text-xs uppercase tracking-[0.24em] text-white/45">Storage</p>
+                  <div className="border-border bg-card/50 rounded-2xl border p-4">
+                    <p className="text-muted-foreground text-xs tracking-[0.24em] uppercase">Storage</p>
                     <p className="mt-2 text-lg font-semibold">Durable queue</p>
                   </div>
-                  <div className="rounded-2xl border border-white/8 bg-white/5 p-4">
-                    <p className="text-xs uppercase tracking-[0.24em] text-white/45">Ideal for</p>
+                  <div className="border-border bg-card/50 rounded-2xl border p-4">
+                    <p className="text-muted-foreground text-xs tracking-[0.24em] uppercase">Ideal for</p>
                     <p className="mt-2 text-lg font-semibold">NAT + LAN</p>
                   </div>
                 </div>
@@ -193,14 +208,14 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="grid gap-6 border-t border-white/10 py-14 md:grid-cols-2 xl:grid-cols-4">
+        <section className="border-border grid gap-6 border-t py-14 md:grid-cols-2 xl:grid-cols-4">
           {featureCards.map((feature) => (
             <article
               key={feature.title}
-              className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6 backdrop-blur"
+              className="border-border bg-card/40 rounded-[1.75rem] border p-6 backdrop-blur"
             >
               <h2 className="text-xl font-semibold">{feature.title}</h2>
-              <p className="mt-3 text-sm leading-7 text-white/68">{feature.description}</p>
+              <p className="text-muted-foreground mt-3 text-sm leading-7">{feature.description}</p>
             </article>
           ))}
         </section>
@@ -210,13 +225,13 @@ export default function Home() {
           className="grid gap-10 py-10 lg:grid-cols-[0.85fr_1.15fr] lg:py-16"
         >
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.32em] text-cyan-200/80">
+            <p className="text-brand-accent text-sm font-semibold tracking-[0.32em] uppercase">
               How it works
             </p>
             <h2 className="mt-4 text-3xl font-semibold sm:text-4xl">
               Keep the webhook path public and the node private.
             </h2>
-            <p className="mt-4 max-w-xl text-base leading-7 text-white/68">
+            <p className="text-muted-foreground mt-4 max-w-xl text-base leading-7">
               clawproxy is deliberately focused: it receives inbound webhook
               traffic on the public internet and hands it off to private
               OpenClaw nodes through authenticated outbound requests.
@@ -227,14 +242,14 @@ export default function Home() {
             {steps.map((step, index) => (
               <div
                 key={step.title}
-                className="flex items-start gap-4 rounded-[1.75rem] border border-white/10 bg-white/5 p-5"
+                className="border-border bg-card/40 flex items-start gap-4 rounded-[1.75rem] border p-5"
               >
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/12 bg-white/10 text-sm font-semibold text-cyan-100">
+                <div className="border-border bg-muted/50 text-brand-accent flex h-11 w-11 shrink-0 items-center justify-center rounded-full border text-sm font-semibold">
                   0{index + 1}
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold">{step.title}</h3>
-                  <p className="mt-2 text-sm leading-7 text-white/68">{step.description}</p>
+                  <p className="text-muted-foreground mt-2 text-sm leading-7">{step.description}</p>
                 </div>
               </div>
             ))}
@@ -242,8 +257,8 @@ export default function Home() {
         </section>
 
         <section className="py-8">
-          <div className="rounded-[2rem] border border-cyan-300/18 bg-gradient-to-r from-cyan-300/10 via-white/6 to-indigo-300/10 p-8 backdrop-blur">
-            <p className="text-sm font-semibold uppercase tracking-[0.32em] text-cyan-200/80">
+          <div className="border-brand-accent/20 from-brand-accent/12 via-card/50 to-chart-2/12 rounded-[2rem] border bg-gradient-to-r p-8 backdrop-blur">
+            <p className="text-brand-accent text-sm font-semibold tracking-[0.32em] uppercase">
               Ready to route inbound events?
             </p>
             <div className="mt-4 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
@@ -251,26 +266,30 @@ export default function Home() {
                 <h2 className="text-3xl font-semibold sm:text-4xl">
                   Public ingress on one side. Secure outbound delivery on the other.
                 </h2>
-                <p className="mt-4 text-base leading-7 text-white/70">
+                <p className="text-muted-foreground mt-4 text-base leading-7">
                   Built for the very common reality that your software can call out,
                   but should not be exposed directly to the internet.
                 </p>
-                <p className="mt-3 text-sm text-white/50">clawproxy.io</p>
+                <p className="text-muted-foreground mt-3 text-sm">clawproxy.io</p>
               </div>
 
               <div className="flex flex-wrap gap-4">
-                <a
-                  href="/dashboard"
-                  className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-100"
+                <Button
+                  asChild
+                  variant="secondary"
+                  size="lg"
+                  className="rounded-full px-6 py-3 text-sm font-semibold"
                 >
-                  Open dashboard
-                </a>
-                <a
-                  href="https://github.com/openclaw/openclaw"
-                  className="rounded-full border border-white/12 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                  <a href="/dashboard">Open dashboard</a>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="lg"
+                  className="rounded-full border-border px-6 py-3 text-sm font-semibold"
                 >
-                  Learn about OpenClaw
-                </a>
+                  <a href="https://github.com/openclaw/openclaw">Learn about OpenClaw</a>
+                </Button>
               </div>
             </div>
           </div>

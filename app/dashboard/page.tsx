@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 
 import { SignOutButton } from '@/app/dashboard/sign-out-button';
 import { auth } from '@/app/lib/auth/server';
+import { AdminShell } from '@/components/app/admin-shell';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,17 +18,12 @@ export default async function DashboardPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#07111f] px-6 py-16 text-white">
-      <div className="mx-auto w-full max-w-3xl rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur">
-        <p className="text-sm font-semibold uppercase tracking-[0.28em] text-cyan-200/80">
-          clawproxy admin
-        </p>
-        <h1 className="mt-4 text-3xl font-semibold">Dashboard</h1>
-        <p className="mt-3 text-sm leading-6 text-white/70">
-          Signed in as {user.email ?? 'unknown user'}
-        </p>
-        <SignOutButton />
-      </div>
-    </main>
+    <AdminShell
+      maxWidthClass="max-w-3xl"
+      title="Dashboard"
+      description={`Signed in as ${user.email ?? 'unknown user'}`}
+    >
+      <SignOutButton />
+    </AdminShell>
   );
 }

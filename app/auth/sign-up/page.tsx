@@ -6,6 +6,11 @@ import { FormEvent, useState } from 'react';
 
 import { createNeonClientAuth } from '@/app/lib/auth/client';
 import { useRedirect127ToLocalhost } from '@/app/lib/auth/dev-origin';
+import { AdminShell } from '@/components/app/admin-shell';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,81 +55,77 @@ export default function SignUpPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#07111f] px-6 py-16 text-white">
-      <div className="mx-auto w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur">
-        <p className="text-sm font-semibold uppercase tracking-[0.28em] text-cyan-200/80">
-          clawproxy admin
-        </p>
-        <h1 className="mt-4 text-3xl font-semibold">Create account</h1>
-        <p className="mt-3 text-sm leading-6 text-white/65">
-          Create a Neon Auth account for managing nodes, routes, and events.
-        </p>
-
-        <form className="mt-8 space-y-4" onSubmit={onSubmit}>
-          <label className="block">
-            <span className="mb-2 block text-sm text-white/75">Name</span>
-            <input
-              type="text"
-              autoComplete="name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-[#0d1728] px-4 py-3 text-white outline-none placeholder:text-white/35"
-              placeholder="Your name"
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-2 block text-sm text-white/75">Email</span>
-            <input
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-[#0d1728] px-4 py-3 text-white outline-none placeholder:text-white/35"
-              placeholder="you@example.com"
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-2 block text-sm text-white/75">Password</span>
-            <input
-              type="password"
-              autoComplete="new-password"
-              required
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-[#0d1728] px-4 py-3 text-white outline-none placeholder:text-white/35"
-              placeholder="Choose a password"
-            />
-          </label>
-
-          {error ? (
-            <div className="rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-200">
-              {error}
-            </div>
-          ) : null}
-
-          {success ? (
-            <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-200">
-              {success}
-            </div>
-          ) : null}
-
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full rounded-xl bg-cyan-300 px-4 py-3 font-semibold text-slate-950 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {submitting ? 'Creating account…' : 'Create account'}
-          </button>
-        </form>
-
-        <div className="mt-6 flex items-center justify-between text-sm text-cyan-200">
-          <Link href="/auth/sign-in">Already have an account?</Link>
-          <Link href="/">Back to home</Link>
+    <AdminShell
+      title="Create account"
+      description="Create a Neon Auth account for managing nodes, routes, and events."
+    >
+      <form className="mt-2 space-y-4" onSubmit={onSubmit}>
+        <div className="space-y-2">
+          <Label htmlFor="sign-up-name">Name</Label>
+          <Input
+            id="sign-up-name"
+            type="text"
+            autoComplete="name"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            className="h-10"
+            placeholder="Your name"
+          />
         </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="sign-up-email">Email</Label>
+          <Input
+            id="sign-up-email"
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            className="h-10"
+            placeholder="you@example.com"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="sign-up-password">Password</Label>
+          <Input
+            id="sign-up-password"
+            type="password"
+            autoComplete="new-password"
+            required
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            className="h-10"
+            placeholder="Choose a password"
+          />
+        </div>
+
+        {error ? (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ) : null}
+
+        {success ? (
+          <Alert className="border-emerald-400/30 bg-emerald-400/10 text-emerald-50">
+            <AlertDescription>{success}</AlertDescription>
+          </Alert>
+        ) : null}
+
+        <Button type="submit" disabled={submitting} className="h-10 w-full" size="lg">
+          {submitting ? 'Creating account…' : 'Create account'}
+        </Button>
+      </form>
+
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-2 text-sm">
+        <Button variant="link" className="text-brand-accent h-auto px-0" asChild>
+          <Link href="/auth/sign-in">Already have an account?</Link>
+        </Button>
+        <Button variant="link" className="text-brand-accent h-auto px-0" asChild>
+          <Link href="/">Back to home</Link>
+        </Button>
       </div>
-    </main>
+    </AdminShell>
   );
 }
