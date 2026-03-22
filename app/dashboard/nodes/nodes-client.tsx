@@ -7,6 +7,22 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
+function buildSkillYaml(origin: string, token?: string): string {
+  const tokenValue = token ?? 'YOUR_NODE_TOKEN_HERE';
+  return `name: clawproxy-relay
+version: "1.0"
+description: Pulls and delivers webhook events from clawproxy
+
+connection:
+  pull_url: "${origin}/api/nodes/pull"
+  ack_url: "${origin}/api/nodes/ack"
+  token: "${tokenValue}"
+
+polling:
+  interval_seconds: 30
+  max_events: 10`;
+}
+
 type NodeRow = {
   id: string;
   name: string;
@@ -69,7 +85,97 @@ type Props = {
   initialNodes: NodeRow[];
 };
 
+type ConnectGuideProps = {
+  origin: string;
+  token?: string;
+  copiedField: string | null;
+  onCopy: (text: string, field: string) => void;
+  onClose: () => void;
+};
+
+function ConnectGuide({ origin, token, copiedField, onCopy, onClose }: ConnectGuideProps) {
+  const pullUrl = `${origin}/api/nodes/pull`;
+  const ackUrl = `${origin}/api/nodes/ack`;
+  const skillYaml = buildSkillYaml(origin, token);
+
+  return (
+    <>
+      <h3 className="text-lg font-semibold">Connect your OpenClaw node</h3>
+      <p className="text-muted-foreground mt-1 text-sm">
+        Configure your private OpenClaw instance to pull events from clawproxy using the endpoints
+        and skill configuration below.
+      </p>
+
+      <div className="mt-5 space-y-4">
+        <div>
+          <p className="mb-1.5 text-xs font-medium">Pull endpoint</p>
+          <div className="border-border/60 bg-background/60 flex items-center gap-2 rounded-lg border px-3 py-2">
+            <code className="flex-1 overflow-x-auto text-xs">{pullUrl}</code>
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={() => onCopy(pullUrl, 'pull')}
+              className="shrink-0"
+            >
+              {copiedField === 'pull' ? 'Copied!' : 'Copy'}
+            </Button>
+          </div>
+        </div>
+
+        <div>
+          <p className="mb-1.5 text-xs font-medium">Acknowledge endpoint</p>
+          <div className="border-border/60 bg-background/60 flex items-center gap-2 rounded-lg border px-3 py-2">
+            <code className="flex-1 overflow-x-auto text-xs">{ackUrl}</code>
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={() => onCopy(ackUrl, 'ack')}
+              className="shrink-0"
+            >
+              {copiedField === 'ack' ? 'Copied!' : 'Copy'}
+            </Button>
+          </div>
+        </div>
+
+        <div>
+          <div className="mb-1.5 flex items-center justify-between">
+            <p className="text-xs font-medium">OpenClaw skill configuration</p>
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={() => onCopy(skillYaml, 'skill')}
+            >
+              {copiedField === 'skill' ? 'Copied!' : 'Copy'}
+            </Button>
+          </div>
+          <pre className="border-border/60 bg-background/60 overflow-x-auto rounded-lg border p-3 text-xs leading-relaxed">
+            {skillYaml}
+          </pre>
+          {!token && (
+            <p className="text-muted-foreground mt-1.5 text-xs">
+              Replace <code className="bg-muted rounded px-1 py-0.5">YOUR_NODE_TOKEN_HERE</code>{' '}
+              with the bearer token shown when you created the node.
+            </p>
+          )}
+        </div>
+      </div>
+
+      <p className="text-muted-foreground mt-4 text-xs">
+        Your OpenClaw node should{' '}
+        <code className="bg-muted rounded px-1 py-0.5">POST</code> to the pull endpoint with{' '}
+        <code className="bg-muted rounded px-1 py-0.5">Authorization: Bearer &lt;token&gt;</code>,
+        process each event, then acknowledge by posting the event IDs to the ack endpoint.
+      </p>
+
+      <Button className="mt-4 w-full" onClick={onClose}>
+        Done
+      </Button>
+    </>
+  );
+}
+
 export function NodesClient({ initialNodes }: Props) {
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const [nodeList, setNodeList] = useState<NodeRow[]>(initialNodes);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [nameInput, setNameInput] = useState('');
@@ -77,7 +183,10 @@ export function NodesClient({ initialNodes }: Props) {
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [createdToken, setCreatedToken] = useState<string | null>(null);
+  const [tokenModalStep, setTokenModalStep] = useState<1 | 2>(1);
   const [tokenCopied, setTokenCopied] = useState(false);
+  const [connectNode, setConnectNode] = useState<NodeRow | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
   const [nodeToDelete, setNodeToDelete] = useState<NodeRow | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
@@ -114,6 +223,7 @@ export function NodesClient({ initialNodes }: Props) {
 
       setNodeList((prev) => [data.node!, ...prev]);
       setCreatedToken(data.token ?? null);
+      setTokenModalStep(1);
       setNameInput('');
       setSlugInput('');
       setShowCreateForm(false);
@@ -151,6 +261,12 @@ export function NodesClient({ initialNodes }: Props) {
     await navigator.clipboard.writeText(createdToken);
     setTokenCopied(true);
     setTimeout(() => setTokenCopied(false), 2000);
+  }
+
+  async function handleCopy(text: string, field: string) {
+    await navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
   }
 
   return (
@@ -245,13 +361,22 @@ export function NodesClient({ initialNodes }: Props) {
                       {formatRelativeTime(node.lastSeenAt)}
                     </td>
                     <td className="px-5 py-3 text-right">
-                      <Button
-                        variant="destructive"
-                        size="xs"
-                        onClick={() => setNodeToDelete(node)}
-                      >
-                        Delete
-                      </Button>
+                      <div className="flex items-center justify-end gap-2">
+                        <Button
+                          variant="outline"
+                          size="xs"
+                          onClick={() => setConnectNode(node)}
+                        >
+                          Connect
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="xs"
+                          onClick={() => setNodeToDelete(node)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -263,25 +388,55 @@ export function NodesClient({ initialNodes }: Props) {
 
       {createdToken && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="border-border/80 bg-card w-full max-w-md rounded-2xl border p-6 shadow-2xl">
-            <h3 className="text-lg font-semibold">Node created</h3>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Copy your bearer token now — it won&apos;t be shown again.
-            </p>
-            <div className="border-border/60 bg-background/60 mt-4 flex items-center gap-2 overflow-hidden rounded-lg border px-3 py-2">
-              <code className="flex-1 overflow-x-auto text-xs break-words">{createdToken}</code>
-              <Button size="xs" variant="outline" onClick={handleCopyToken} className="shrink-0">
-                {tokenCopied ? 'Copied!' : 'Copy'}
-              </Button>
-            </div>
-            <p className="text-muted-foreground mt-3 text-xs">
-              Use this token as the{' '}
-              <code className="bg-muted rounded px-1 py-0.5">Authorization: Bearer</code> header in
-              your OpenClaw node configuration.
-            </p>
-            <Button className="mt-4 w-full" onClick={() => setCreatedToken(null)}>
-              Done
-            </Button>
+          <div className="border-border/80 bg-card w-full max-w-lg rounded-2xl border p-6 shadow-2xl">
+            {tokenModalStep === 1 ? (
+              <>
+                <h3 className="text-lg font-semibold">Node created</h3>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  Copy your bearer token now — it won&apos;t be shown again.
+                </p>
+                <div className="border-border/60 bg-background/60 mt-4 flex items-center gap-2 overflow-hidden rounded-lg border px-3 py-2">
+                  <code className="flex-1 overflow-x-auto text-xs break-words">{createdToken}</code>
+                  <Button size="xs" variant="outline" onClick={handleCopyToken} className="shrink-0">
+                    {tokenCopied ? 'Copied!' : 'Copy'}
+                  </Button>
+                </div>
+                <p className="text-muted-foreground mt-3 text-xs">
+                  Use this token as the{' '}
+                  <code className="bg-muted rounded px-1 py-0.5">Authorization: Bearer</code> header
+                  when your OpenClaw node connects to clawproxy.
+                </p>
+                <div className="mt-4 flex gap-2">
+                  <Button className="flex-1" onClick={() => setTokenModalStep(2)}>
+                    Next: connect your node →
+                  </Button>
+                  <Button variant="outline" onClick={() => setCreatedToken(null)}>
+                    Done
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <ConnectGuide
+                origin={origin}
+                token={createdToken}
+                copiedField={copiedField}
+                onCopy={handleCopy}
+                onClose={() => setCreatedToken(null)}
+              />
+            )}
+          </div>
+        </div>
+      )}
+
+      {connectNode && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="border-border/80 bg-card w-full max-w-lg rounded-2xl border p-6 shadow-2xl">
+            <ConnectGuide
+              origin={origin}
+              copiedField={copiedField}
+              onCopy={handleCopy}
+              onClose={() => setConnectNode(null)}
+            />
           </div>
         </div>
       )}
