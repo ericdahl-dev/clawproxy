@@ -24,7 +24,7 @@ describe('dashboard entry page', () => {
   });
 
   test('redirects unauthenticated users to sign in', async () => {
-    getSessionMock.mockResolvedValue({ data: { session: null } });
+    getSessionMock.mockResolvedValue({ data: null });
 
     const dashboardPage = await import('@/app/dashboard/page');
 
@@ -35,11 +35,15 @@ describe('dashboard entry page', () => {
   test('renders dashboard entry for authenticated users', async () => {
     getSessionMock.mockResolvedValue({
       data: {
-        session: {
-          user: {
-            id: 'user_123',
-            email: 'admin@example.com',
-          },
+        id: 'session_123',
+        userId: 'user_123',
+        token: 'token_123',
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+        expiresAt: new Date('2026-01-02T00:00:00.000Z'),
+        user: {
+          id: 'user_123',
+          email: 'admin@example.com',
         },
       },
     });

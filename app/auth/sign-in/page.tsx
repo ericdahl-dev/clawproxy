@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { FormEvent, useState } from 'react';
+import { FormEvent, Suspense, useState } from 'react';
 
 import { createNeonClientAuth } from '@/app/lib/auth/client';
 import { useRedirect127ToLocalhost } from '@/app/lib/auth/dev-origin';
@@ -11,6 +11,14 @@ import { resolvePostSignInRedirect } from '@/app/lib/auth/post-sign-in-redirect'
 export const dynamic = 'force-dynamic';
 
 export default function SignInPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignInForm />
+    </Suspense>
+  );
+}
+
+function SignInForm() {
   useRedirect127ToLocalhost();
   const router = useRouter();
   const searchParams = useSearchParams();

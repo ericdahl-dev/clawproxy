@@ -5,8 +5,8 @@ import { auth } from '@/app/lib/auth/server';
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
-  const { data } = await auth.getSession();
-  const user = data?.session?.user;
+  const { data: session } = await auth.getSession();
+  const user = session?.user;
 
   if (!user) {
     redirect('/auth/sign-in?next=%2Fdashboard');
