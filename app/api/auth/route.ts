@@ -1,6 +1,6 @@
-import { authApiHandler } from '@neondatabase/auth/next/server';
+import { auth } from '@/app/lib/auth/server';
 
-const handler = authApiHandler();
+const handler = auth.handler();
 
 export async function GET(request: Request) {
   return handler.GET(request, { params: Promise.resolve({ path: [] }) });
