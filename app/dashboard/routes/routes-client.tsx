@@ -26,6 +26,8 @@ type Props = {
   availableNodes: NodeOption[];
 };
 
+type PatchRouteJson = { ok: boolean; route?: { enabled: boolean }; error?: string };
+
 function EnabledBadge({ enabled }: { enabled: boolean }) {
   return (
     <span
@@ -156,11 +158,11 @@ export function RoutesClient({ initialRoutes, availableNodes }: Props) {
         body: JSON.stringify({ enabled: !route.enabled }),
       });
 
-      let data: { ok: boolean; route?: { enabled: boolean }; error?: string } | null = null;
+      let data: PatchRouteJson | null = null;
       const contentType = res.headers.get('content-type') ?? '';
       if (contentType.includes('application/json')) {
         try {
-          data = (await res.json()) as typeof data;
+          data = (await res.json()) as PatchRouteJson;
         } catch {
           // ignore JSON parse errors; fall back to error state
         }
