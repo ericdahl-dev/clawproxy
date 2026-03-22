@@ -21,4 +21,9 @@ describe('resolvePostSignInRedirect', () => {
     expect(resolvePostSignInRedirect('dashboard')).toBe('/dashboard');
     expect(resolvePostSignInRedirect('javascript:alert(1)')).toBe('/dashboard');
   });
+
+  test('rejects paths containing backslashes', () => {
+    expect(resolvePostSignInRedirect('/\\evil.test/path')).toBe('/dashboard');
+    expect(resolvePostSignInRedirect('/dashboard\\..\\evil')).toBe('/dashboard');
+  });
 });

@@ -15,5 +15,9 @@ export function resolvePostSignInRedirect(nextParam: string | null | undefined):
     return DEFAULT_POST_SIGN_IN_PATH;
   }
 
+  if (trimmed.includes('\\')) {
+    return DEFAULT_POST_SIGN_IN_PATH;
+  }
+
   return trimmed;
 }

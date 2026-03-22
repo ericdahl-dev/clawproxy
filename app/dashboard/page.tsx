@@ -1,3 +1,5 @@
+import 'server-only';
+
 import { redirect } from 'next/navigation';
 
 import { auth } from '@/app/lib/auth/server';
@@ -9,7 +11,8 @@ export default async function DashboardPage() {
   const user = session?.user;
 
   if (!user) {
-    redirect('/auth/sign-in?next=%2Fdashboard');
+    const params = new URLSearchParams({ next: '/dashboard' });
+    redirect(`/auth/sign-in?${params.toString()}`);
   }
 
   return (
