@@ -1,17 +1,19 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { FormEvent, useState } from 'react';
 
 import { createNeonClientAuth } from '@/app/lib/auth/client';
 import { useRedirect127ToLocalhost } from '@/app/lib/auth/dev-origin';
+import { resolvePostSignInRedirect } from '@/app/lib/auth/post-sign-in-redirect';
 
 export const dynamic = 'force-dynamic';
 
 export default function SignInPage() {
   useRedirect127ToLocalhost();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +35,8 @@ export default function SignInPage() {
         throw new Error(result.error.message || 'Sign-in failed');
       }
 
-      router.push('/');
+      const redirectPath = resolvePostSignInRedirect(searchParams.get('next'));
+      router.push(redirectPath);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign-in failed');
