@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { createNeonClientAuth } from '@/app/lib/auth/client';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 
 export function SignOutButton() {
   const router = useRouter();
@@ -31,20 +33,21 @@ export function SignOutButton() {
   }
 
   return (
-    <div className="mt-6 flex flex-col gap-2">
+    <div className="mt-4 flex flex-col gap-2">
       {error ? (
-        <p className="text-sm text-red-200" role="alert">
-          {error}
-        </p>
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       ) : null}
-      <button
+      <Button
         type="button"
+        variant="outline"
         onClick={onSignOut}
         disabled={busy}
-        className="inline-flex w-fit items-center justify-center rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+        className="h-10 w-fit"
       >
         {busy ? 'Signing out…' : 'Sign out'}
-      </button>
+      </Button>
     </div>
   );
 }

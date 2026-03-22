@@ -7,6 +7,11 @@ import { FormEvent, Suspense, useState } from 'react';
 import { createNeonClientAuth } from '@/app/lib/auth/client';
 import { useRedirect127ToLocalhost } from '@/app/lib/auth/dev-origin';
 import { resolvePostSignInRedirect } from '@/app/lib/auth/post-sign-in-redirect';
+import { AdminShell } from '@/components/app/admin-shell';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,71 +59,68 @@ function SignInForm() {
   }
 
   return (
-    <main className="min-h-screen bg-[#07111f] px-6 py-16 text-white">
-      <div className="mx-auto w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur">
-        <p className="text-sm font-semibold uppercase tracking-[0.28em] text-cyan-200/80">
-          clawproxy admin
-        </p>
-        <h1 className="mt-4 text-3xl font-semibold">Sign in</h1>
-        <p className="mt-3 text-sm leading-6 text-white/65">
-          Sign in with your Neon Auth account to manage nodes, routes, and events.
-        </p>
+    <AdminShell
+      title="Sign in"
+      description="Sign in with your Neon Auth account to manage nodes, routes, and events."
+    >
+      <form className="mt-2 space-y-4" onSubmit={onSubmit}>
+        <div className="space-y-2">
+          <Label htmlFor="sign-in-email">Email</Label>
+          <Input
+            id="sign-in-email"
+            type="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            className="h-10"
+            placeholder="you@example.com"
+          />
+        </div>
 
-        <form className="mt-8 space-y-4" onSubmit={onSubmit}>
-          <label className="block">
-            <span className="mb-2 block text-sm text-white/75">Email</span>
-            <input
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-[#0d1728] px-4 py-3 text-white outline-none ring-0 placeholder:text-white/35"
-              placeholder="you@example.com"
-            />
-          </label>
+        <div className="space-y-2">
+          <Label htmlFor="sign-in-password">Password</Label>
+          <Input
+            id="sign-in-password"
+            type="password"
+            autoComplete="current-password"
+            required
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            className="h-10"
+            placeholder="••••••••"
+          />
+        </div>
 
-          <label className="block">
-            <span className="mb-2 block text-sm text-white/75">Password</span>
-            <input
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-[#0d1728] px-4 py-3 text-white outline-none ring-0 placeholder:text-white/35"
-              placeholder="••••••••"
-            />
-          </label>
+        {error ? (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ) : null}
 
-          {error ? (
-            <div className="rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-200">
-              {error}
-            </div>
-          ) : null}
+        <Button type="submit" disabled={submitting} className="h-10 w-full" size="lg">
+          {submitting ? 'Signing in…' : 'Sign in'}
+        </Button>
+      </form>
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full rounded-xl bg-cyan-300 px-4 py-3 font-semibold text-slate-950 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {submitting ? 'Signing in…' : 'Sign in'}
-          </button>
-        </form>
+      <p className="text-muted-foreground mt-6 text-sm">
+        Need an account? Create one through your Neon Auth configuration flow first.
+      </p>
 
-        <p className="mt-6 text-sm text-white/55">
-          Need an account? Create one through your Neon Auth configuration flow first.
-        </p>
-
-        <div className="mt-6 flex items-center justify-between text-sm text-cyan-200">
+      <div className="mt-6 flex items-center justify-between gap-2 text-sm">
+        <Button variant="link" className="text-brand-accent h-auto px-0" asChild>
           <Link href="/auth/forgot-password">Forgot password?</Link>
+        </Button>
+        <Button variant="link" className="text-brand-accent h-auto px-0" asChild>
           <Link href="/auth/sign-up">Create account</Link>
-        </div>
-
-        <div className="mt-4 text-sm text-cyan-200">
-          <Link href="/">Back to home</Link>
-        </div>
+        </Button>
       </div>
-    </main>
+
+      <div className="mt-4 text-sm">
+        <Button variant="link" className="text-brand-accent h-auto px-0" asChild>
+          <Link href="/">Back to home</Link>
+        </Button>
+      </div>
+    </AdminShell>
   );
 }
