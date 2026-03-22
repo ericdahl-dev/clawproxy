@@ -1,0 +1,151 @@
+import { describe, expect, test, vi } from 'vitest';
+
+const mockRequireAdminUser = vi.hoisted(() => vi.fn());
+
+const { mockDb, mockDbOrderBy, mockDbSelectLimit, mockDbInsertReturning } = vi.hoisted(() => {
+  const mockDbOrderBy = vi.fn().mockResolvedValue([]);
+  const mockDbSelectWhere = vi.fn().mockReturnValue({ orderBy: mockDbOrderBy });
+
+  const mockDbSelectLimit = vi.fn().mockResolvedValue([]);
+  const mockDbSelectWhere2 = vi.fn().mockReturnValue({ limit: mockDbSelectLimit });
+
+  // select() is called for two different queries in the route:
+  // 1. listing routes (where → orderBy)
+  // 2. ownership check (where → limit)
+  // We alternate returns based on call order.
+  const mockDbSelectFrom = vi.fn();
+  mockDbSelectFrom
+    .mockReturnValueOnce({ where: mockDbSelectWhere }) // list routes
+    .mockReturnValue({ where: mockDbSelectWhere2 }); // ownership check (and subsequent)
+
+  const mockDbInsertReturning = vi.fn().mockResolvedValue([]);
+  const mockDbInsertValues = vi.fn().mockReturnValue({ returning: mockDbInsertReturning });
+
+  const mockDb = {
+    select: vi.fn().mockReturnValue({ from: mockDbSelectFrom }),
+    insert: vi.fn().mockReturnValue({ values: mockDbInsertValues }),
+  };
+
+  return { mockDb, mockDbOrderBy, mockDbSelectLimit, mockDbInsertReturning };
+});
+
+vi.mock('@/app/lib/auth/require-admin', () => ({
+  requireAdminUser: mockRequireAdminUser,
+}));
+
+vi.mock('@/app/lib/db/client', () => ({ db: mockDb }));
+
+import { GET, POST } from '@/app/api/admin/routes/route';
+
+const mockUser = { id: 'user-1', email: 'admin@example.com' };
+
+const mockRoute = {
+  id: 'route-uuid-1',
+  nodeId: 'node-uuid-1',
+  slug: 'my-webhook',
+  enabled: true,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
+
+describe('GET /api/admin/routes', () => {
+  test('returns 401 when user is not authenticated', async () => {
+    mockRequireAdminUser.mockRejectedValue(new Error('Unauthorized'));
+
+    const response = await GET();
+    const body = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(body.ok).toBe(false);
+  });
+
+  test('returns 200 with the user route list', async () => {
+    mockRequireAdminUser.mockResolvedValue(mockUser);
+    mockDbOrderBy.mockResolvedValue([mockRoute]);
+
+    const response = await GET();
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(body.routes).toHaveLength(1);
+    expect(body.routes[0].slug).toBe('my-webhook');
+  });
+});
+
+describe('POST /api/admin/routes', () => {
+  function makeRequest(body: Record<string, unknown>) {
+    return new Request('http://localhost/api/admin/routes', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  }
+
+  test('returns 401 when user is not authenticated', async () => {
+    mockRequireAdminUser.mockRejectedValue(new Error('Unauthorized'));
+
+    const response = await POST(makeRequest({ nodeId: 'n', slug: 'my-webhook' }));
+    const body = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(body.ok).toBe(false);
+  });
+
+  test('returns 400 when nodeId is missing', async () => {
+    mockRequireAdminUser.mockResolvedValue(mockUser);
+
+    const response = await POST(makeRequest({ slug: 'my-webhook' }));
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.ok).toBe(false);
+    expect(body.error).toMatch(/required/i);
+  });
+
+  test('returns 400 when slug is missing', async () => {
+    mockRequireAdminUser.mockResolvedValue(mockUser);
+
+    const response = await POST(makeRequest({ nodeId: 'node-uuid-1' }));
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.ok).toBe(false);
+    expect(body.error).toMatch(/required/i);
+  });
+
+  test('returns 404 when node is not owned by the user', async () => {
+    mockRequireAdminUser.mockResolvedValue(mockUser);
+    // reset from call so the limit path is hit first
+    mockDb.select.mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([]) }),
+      }),
+    });
+
+    const response = await POST(makeRequest({ nodeId: 'node-uuid-1', slug: 'my-webhook' }));
+    const body = await response.json();
+
+    expect(response.status).toBe(404);
+    expect(body.ok).toBe(false);
+    expect(body.error).toMatch(/node not found/i);
+  });
+
+  test('creates route and returns it when node is owned', async () => {
+    mockRequireAdminUser.mockResolvedValue(mockUser);
+    // Ownership check succeeds
+    mockDb.select.mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([{ id: 'node-uuid-1' }]) }),
+      }),
+    });
+    mockDbInsertReturning.mockResolvedValue([mockRoute]);
+
+    const response = await POST(makeRequest({ nodeId: 'node-uuid-1', slug: 'my-webhook' }));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(body.route.slug).toBe('my-webhook');
+  });
+});
