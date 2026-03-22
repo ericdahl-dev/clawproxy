@@ -117,6 +117,7 @@ export function EventsClient({ initialEvents, availableNodes }: Props) {
   const [selectedEvent, setSelectedEvent] = useState<EventDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState<boolean>(false);
   const [detailError, setDetailError] = useState<string | null>(null);
+  const [retryLoading, setRetryLoading] = useState<boolean>(false);
 
   const fetchEvents = useCallback(
     async (
@@ -220,6 +221,27 @@ export function EventsClient({ initialEvents, availableNodes }: Props) {
       setDetailError('Failed to load event details. Please try again.');
     } finally {
       setDetailLoading(false);
+    }
+  }
+
+  async function handleRetry(eventId: string) {
+    setRetryLoading(true);
+    try {
+      const res = await fetch(`/api/admin/events/${eventId}/retry`, {
+        method: 'POST',
+        credentials: 'same-origin',
+      });
+      const data = (await res.json()) as { ok: boolean; error?: string };
+      if (!data.ok) {
+        setDetailError(data.error ?? 'Failed to retry event.');
+        return;
+      }
+      setSelectedEvent(null);
+      void fetchEvents(selectedStatuses, selectedNodeId, dateRange, offset);
+    } catch {
+      setDetailError('Failed to retry event. Please try again.');
+    } finally {
+      setRetryLoading(false);
     }
   }
 
@@ -390,9 +412,21 @@ export function EventsClient({ initialEvents, availableNodes }: Props) {
               <>
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">Event details</h3>
-                  <Button variant="outline" size="xs" onClick={() => setSelectedEvent(null)}>
-                    Close
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    {(selectedEvent.status === 'failed' || selectedEvent.status === 'expired') && (
+                      <Button
+                        variant="outline"
+                        size="xs"
+                        disabled={retryLoading}
+                        onClick={() => void handleRetry(selectedEvent.id)}
+                      >
+                        {retryLoading ? 'Retrying…' : 'Retry'}
+                      </Button>
+                    )}
+                    <Button variant="outline" size="xs" onClick={() => setSelectedEvent(null)}>
+                      Close
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="mt-4 flex flex-wrap gap-x-6 gap-y-3">
