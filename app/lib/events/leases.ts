@@ -3,6 +3,7 @@ import 'server-only';
 export const DEFAULT_LEASE_DURATION_SECONDS = 60;
 export const DEFAULT_MAX_PULL_EVENTS = 10;
 export const MAX_PULL_EVENTS = 100;
+export const DEFAULT_MAX_RETRY_ATTEMPTS = 5;
 
 export function clampMaxPullEvents(value: unknown): number {
   if (typeof value !== 'number' || !Number.isFinite(value)) {

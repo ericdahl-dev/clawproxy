@@ -59,9 +59,10 @@ describe('POST /api/nodes/pull', () => {
 
   test('returns 200 with empty events when none are pending', async () => {
     mockRequireNodeFromRequest.mockResolvedValue(activeNode);
-    // First sql call: UPDATE nodes; second: UPDATE events RETURNING
+    // First sql call: UPDATE nodes; second: expire stale events; third: UPDATE events RETURNING
     mockSql
       .mockResolvedValueOnce([]) // UPDATE nodes (no rows returned)
+      .mockResolvedValueOnce([]) // expire stale events
       .mockResolvedValueOnce([]); // UPDATE events → 0 events
 
     const response = await POST(makeRequest());
@@ -89,6 +90,7 @@ describe('POST /api/nodes/pull', () => {
 
     mockSql
       .mockResolvedValueOnce([]) // UPDATE nodes
+      .mockResolvedValueOnce([]) // expire stale events
       .mockResolvedValueOnce([pendingEvent]); // UPDATE events RETURNING
 
     const response = await POST(makeRequest({ maxEvents: 5 }));
