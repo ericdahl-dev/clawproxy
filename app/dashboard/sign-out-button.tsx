@@ -15,14 +15,15 @@ export function SignOutButton() {
   async function onSignOut() {
     setBusy(true);
     setError(null);
+
     try {
       const auth = await createNeonClientAuth();
       const result = await auth.signOut();
+
       if (result?.error) {
-        throw new Error(
-          (result.error as { message?: string }).message || 'Sign out failed',
-        );
+        throw new Error(result.error.message || 'Sign out failed');
       }
+
       router.push('/auth/sign-in');
       router.refresh();
     } catch (err) {
@@ -33,7 +34,7 @@ export function SignOutButton() {
   }
 
   return (
-    <div className="mt-4 flex flex-col gap-2">
+    <div className="flex flex-col gap-2">
       {error ? (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
