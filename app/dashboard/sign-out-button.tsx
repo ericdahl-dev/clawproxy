@@ -16,15 +16,10 @@ export function SignOutButton() {
     try {
       const auth = await createNeonClientAuth();
       const result = await auth.signOut();
-      if (result && typeof result === 'object' && 'error' in result && result.error) {
-        const msg =
-          typeof result.error === 'object' &&
-          result.error !== null &&
-          'message' in result.error &&
-          typeof (result.error as { message?: string }).message === 'string'
-            ? (result.error as { message: string }).message
-            : 'Sign out failed';
-        throw new Error(msg);
+      if (result?.error) {
+        throw new Error(
+          (result.error as { message?: string }).message || 'Sign out failed',
+        );
       }
       router.push('/auth/sign-in');
       router.refresh();
