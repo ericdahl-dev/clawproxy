@@ -4,6 +4,33 @@ A lightweight, self-hostable Next.js service that provides secure public webhook
 
 See [PLAN.md](./PLAN.md) for the full product specification and architectural decisions.
 
+## How it works
+
+```mermaid
+flowchart LR
+    subgraph internet ["☁️ Public Internet"]
+        P["Provider\nGitHub · Stripe · Slack"]
+        C["clawproxy\n(public endpoint)"]
+        Q[("Durable\nqueue")]
+    end
+
+    subgraph private ["🔒 Your Private Network"]
+        N["OpenClaw node\n(behind NAT / LAN)"]
+    end
+
+    P -- "webhook POST" --> C
+    C --> Q
+    N -- "outbound pull" --> Q
+    Q -- "events" --> N
+    N -- "acknowledge" --> C
+```
+
+1. **A provider** (GitHub, Stripe, Slack, …) sends a webhook to your public clawproxy URL.
+2. **clawproxy** accepts the request, validates it, and persists the event to a durable queue.
+3. **Your OpenClaw node** — running behind NAT or a private LAN — polls clawproxy over an outbound connection, fetches queued events, processes them locally, and acknowledges delivery.
+
+Your private node never needs an open port or firewall rule.
+
 ## Getting Started
 
 ### Prerequisites
