@@ -15,7 +15,7 @@ See `PLAN.md` for the full product specification and architectural decisions.
 
 - **Framework:** Next.js (App Router)
 - **Language:** TypeScript
-- **Runtime:** Node.js
+- **Runtime:** Node.js using Yarn 4
 - **Database:** Neon Postgres
 - **ORM:** Drizzle ORM (`drizzle-orm`, config in `drizzle.config.ts`, schema in `db/schema.ts`)
 - **Auth:** Neon Auth (`@neondatabase/auth`)
