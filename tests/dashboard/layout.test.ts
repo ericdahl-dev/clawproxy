@@ -11,6 +11,7 @@ const getSessionMock = vi.fn();
 
 vi.mock('next/navigation', () => ({
   redirect: redirectMock,
+  usePathname: () => '/dashboard',
   useRouter: () => ({
     push: vi.fn(),
     refresh: vi.fn(),

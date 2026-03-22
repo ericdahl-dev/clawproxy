@@ -1,18 +1,11 @@
 import 'server-only';
 
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import type { ReactNode } from 'react';
 
+import { DashboardNav } from '@/app/dashboard/dashboard-nav';
 import { SignOutButton } from '@/app/dashboard/sign-out-button';
 import { auth } from '@/app/lib/auth/server';
-
-const navigation = [
-  { href: '/dashboard', label: 'Overview' },
-  { href: '/dashboard/nodes', label: 'Nodes' },
-  { href: '/dashboard/routes', label: 'Routes' },
-  { href: '/dashboard/events', label: 'Events' },
-];
 
 export const dynamic = 'force-dynamic';
 
@@ -44,20 +37,7 @@ export default async function DashboardLayout({
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <nav aria-label="Dashboard navigation">
-              <ul className="flex flex-wrap gap-2">
-                {navigation.map((item) => (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      className="border-border/80 text-foreground/85 hover:bg-muted/60 rounded-full border px-4 py-2 text-sm transition"
-                    >
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
+            <DashboardNav />
             <SignOutButton />
           </div>
         </header>
