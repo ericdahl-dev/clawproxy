@@ -1,0 +1,12 @@
+.git
+.github
+.next
+node_modules
+.env*
+coverage
+*.tsbuildinfo
+next-env.d.ts
+README.md
+PLAN.md
+AGENTS.md
+CLAUDE.md

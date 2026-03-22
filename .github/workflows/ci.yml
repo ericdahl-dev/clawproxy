@@ -44,3 +44,26 @@ jobs:
 
       - name: Run production build
         run: npm run build
+
+  docker-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          build-args: |
+            NEXT_PUBLIC_NEON_AUTH_BASE_URL=https://example.neon.tech/neondb/auth
+            DATABASE_URL=postgresql://user:password@example.com/neondb?sslmode=require
+            NEON_AUTH_BASE_URL=https://example.neon.tech/neondb/auth
+            NEON_AUTH_COOKIE_SECRET=test-test-test-test-test-test-test-test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
