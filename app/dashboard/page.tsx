@@ -2,6 +2,7 @@ import 'server-only';
 
 import { redirect } from 'next/navigation';
 
+import { SignOutButton } from '@/app/dashboard/sign-out-button';
 import { auth } from '@/app/lib/auth/server';
 
 export const dynamic = 'force-dynamic';
@@ -25,6 +26,7 @@ export default async function DashboardPage() {
         <p className="mt-3 text-sm leading-6 text-white/70">
           Signed in as {user.email ?? 'unknown user'}
         </p>
+        <SignOutButton />
       </div>
     </main>
   );

@@ -9,6 +9,10 @@ const getSessionMock = vi.fn();
 
 vi.mock('next/navigation', () => ({
   redirect: redirectMock,
+  useRouter: () => ({
+    push: vi.fn(),
+    refresh: vi.fn(),
+  }),
 }));
 
 vi.mock('@/app/lib/auth/server', () => ({
@@ -55,5 +59,6 @@ describe('dashboard entry page', () => {
     expect(redirectMock).not.toHaveBeenCalled();
     expect(html).toContain('Dashboard');
     expect(html).toContain('admin@example.com');
+    expect(html).toContain('Sign out');
   });
 });
