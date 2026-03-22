@@ -30,23 +30,30 @@ app/
   api/
     ingress/[routeSlug]/    # Public webhook ingestion endpoint
     nodes/pull/             # Node event polling endpoint
-    admin/                  # Admin API routes
+    nodes/ack/              # Node event acknowledgement endpoint
+    admin/                  # Admin API routes (events, nodes, routes)
     auth/                   # Auth-related API routes
     version/                # Version endpoint
   auth/                     # Auth pages (sign-in, sign-up, forgot-password)
   action/                   # Next.js server actions
+  dashboard/                # Dashboard UI pages (nodes, routes, events)
   lib/
-    auth/                   # Auth helpers
-    db/                     # Database client
-    events/                 # Event business logic (leases, expiry)
+    auth/                   # Auth helpers (server, client, require-admin, require-node)
+    db.ts                   # Raw postgres.js connection (sql template tag)
+    db/                     # Drizzle ORM client (db)
+    events/                 # Event business logic (leases, expiry, lifecycle, ack)
     http/                   # HTTP utilities (header helpers)
 db/
   schema.ts                 # Drizzle ORM table definitions
   migrations/               # Generated Drizzle migrations
 tests/
-  events/                   # Event logic unit tests
+  api/                      # API route unit tests (ingress, admin, nodes-pull)
   auth/                     # Auth unit tests
-  support/                  # Test support utilities
+  dashboard/                # Dashboard component tests
+  events/                   # Event logic unit tests
+  http/                     # HTTP utility tests
+  landing/                  # Landing page component tests
+  support/                  # Test support utilities (server-only stub)
 ```
 
 ## Database Schema
