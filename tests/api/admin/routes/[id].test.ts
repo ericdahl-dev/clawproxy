@@ -103,6 +103,23 @@ describe('PATCH /api/admin/routes/[id]', () => {
     expect(body.error).toMatch(/required/i);
   });
 
+  test('returns 400 when request body is invalid JSON', async () => {
+    mockRequireAdminUser.mockResolvedValue(mockUser);
+
+    const request = new Request('http://localhost/api/admin/routes/route-uuid-1', {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: '{"enabled": true', // missing closing brace
+    });
+
+    const response = await PATCH(request, makeContext('route-uuid-1'));
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.ok).toBe(false);
+    expect(body.error).toMatch(/invalid json/i);
+  });
+
   test('returns 404 when route does not exist or is not owned by user', async () => {
     mockRequireAdminUser.mockResolvedValue(mockUser);
     mockDbUpdateReturning.mockResolvedValue([]);

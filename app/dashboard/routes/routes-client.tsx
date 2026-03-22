@@ -56,8 +56,10 @@ export function RoutesClient({ initialRoutes, availableNodes }: Props) {
   const [createError, setCreateError] = useState<string | null>(null);
   const [routeToDelete, setRouteToDelete] = useState<RouteRow | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [copiedRouteId, setCopiedRouteId] = useState<string | null>(null);
   const [togglingRouteId, setTogglingRouteId] = useState<string | null>(null);
+  const [toggleError, setToggleError] = useState<string | null>(null);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -111,15 +113,32 @@ export function RoutesClient({ initialRoutes, availableNodes }: Props) {
   async function handleDelete() {
     if (!routeToDelete) return;
     setDeleteLoading(true);
+    setDeleteError(null);
 
     try {
       const res = await fetch(`/api/admin/routes/${routeToDelete.id}`, { method: 'DELETE' });
-      const data = (await res.json()) as { ok: boolean; error?: string };
 
-      if (data.ok) {
-        setRouteList((prev) => prev.filter((r) => r.id !== routeToDelete.id));
-        setRouteToDelete(null);
+      let data: { ok: boolean; error?: string } | null = null;
+      const contentType = res.headers.get('content-type') ?? '';
+      if (contentType.includes('application/json')) {
+        try {
+          data = (await res.json()) as { ok: boolean; error?: string };
+        } catch {
+          // ignore JSON parse errors; fall back to a generic error message
+        }
       }
+
+      if (!res.ok || !data?.ok) {
+        setDeleteError(
+          data?.error ?? `Failed to delete route (status ${res.status}). Please try again.`,
+        );
+        return;
+      }
+
+      setRouteList((prev) => prev.filter((r) => r.id !== routeToDelete.id));
+      setRouteToDelete(null);
+    } catch {
+      setDeleteError('Failed to delete route due to a network error. Please try again.');
     } finally {
       setDeleteLoading(false);
     }
@@ -127,6 +146,7 @@ export function RoutesClient({ initialRoutes, availableNodes }: Props) {
 
   async function handleToggleEnabled(route: RouteRow) {
     setTogglingRouteId(route.id);
+    setToggleError(null);
 
     try {
       const res = await fetch(`/api/admin/routes/${route.id}`, {
@@ -135,13 +155,31 @@ export function RoutesClient({ initialRoutes, availableNodes }: Props) {
         credentials: 'same-origin',
         body: JSON.stringify({ enabled: !route.enabled }),
       });
-      const data = (await res.json()) as { ok: boolean; route?: { enabled: boolean } };
 
-      if (data.ok && data.route) {
+      let data: { ok: boolean; route?: { enabled: boolean }; error?: string } | null = null;
+      const contentType = res.headers.get('content-type') ?? '';
+      if (contentType.includes('application/json')) {
+        try {
+          data = (await res.json()) as typeof data;
+        } catch {
+          // ignore JSON parse errors; fall back to error state
+        }
+      }
+
+      if (!res.ok || !data?.ok) {
+        setToggleError(
+          data?.error ?? `Failed to update route (status ${res.status}). Please try again.`,
+        );
+        return;
+      }
+
+      if (data.route) {
         setRouteList((prev) =>
-          prev.map((r) => (r.id === route.id ? { ...r, enabled: data.route!.enabled } : r)),
+          prev.map((r) => (r.id === route.id ? { ...r, enabled: data!.route!.enabled } : r)),
         );
       }
+    } catch {
+      setToggleError('Failed to update route due to a network error. Please try again.');
     } finally {
       setTogglingRouteId(null);
     }
@@ -283,7 +321,7 @@ export function RoutesClient({ initialRoutes, availableNodes }: Props) {
                       <Button
                         variant="destructive"
                         size="xs"
-                        onClick={() => setRouteToDelete(route)}
+                        onClick={() => { setRouteToDelete(route); setDeleteError(null); }}
                       >
                         Delete
                       </Button>
@@ -296,6 +334,10 @@ export function RoutesClient({ initialRoutes, availableNodes }: Props) {
         </div>
       )}
 
+      {toggleError && (
+        <p className="text-destructive text-sm">{toggleError}</p>
+      )}
+
       {routeToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="border-border/80 bg-card w-full max-w-sm rounded-2xl border p-6 shadow-2xl">
@@ -305,6 +347,7 @@ export function RoutesClient({ initialRoutes, availableNodes }: Props) {
               <span className="text-foreground font-mono font-medium">{routeToDelete.slug}</span>{' '}
               and all its events. This action cannot be undone.
             </p>
+            {deleteError && <p className="text-destructive mt-3 text-sm">{deleteError}</p>}
             <div className="mt-5 flex gap-2">
               <Button
                 variant="destructive"
@@ -318,7 +361,7 @@ export function RoutesClient({ initialRoutes, availableNodes }: Props) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setRouteToDelete(null)}
+                onClick={() => { setRouteToDelete(null); setDeleteError(null); }}
                 className="flex-1"
               >
                 Cancel
