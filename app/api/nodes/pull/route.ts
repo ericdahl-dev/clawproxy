@@ -4,6 +4,7 @@ import { requireNodeFromRequest } from '@/app/lib/auth/require-node';
 import {
   clampMaxPullEvents,
   DEFAULT_LEASE_DURATION_SECONDS,
+  DEFAULT_MAX_RETRY_ATTEMPTS,
 } from '@/app/lib/events/leases';
 import { sql } from '@/app/lib/db';
 
@@ -31,12 +32,21 @@ export async function POST(request: Request) {
       WHERE id = ${node.id}
     `;
 
+    await sql`
+      UPDATE events
+      SET status = 'expired', updated_at = now()
+      WHERE node_id = ${node.id}
+        AND status IN ('pending', 'leased')
+        AND expires_at <= now()
+    `;
+
     const events = await sql<PullEventRow[]>`
       WITH candidate_events AS (
         SELECT e.id
         FROM events e
         WHERE e.node_id = ${node.id}
           AND e.expires_at > now()
+          AND e.attempt_count < ${DEFAULT_MAX_RETRY_ATTEMPTS}
           AND (
             e.status = 'pending'
             OR (e.status = 'leased' AND e.lease_expires_at IS NOT NULL AND e.lease_expires_at <= now())
@@ -85,3 +95,4 @@ export async function POST(request: Request) {
     );
   }
 }
+
