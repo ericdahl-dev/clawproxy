@@ -1,0 +1,15 @@
+[phases.setup]
+nixPkgs = ["nodejs_22"]
+
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "node .next/standalone/server.js"
+
+[variables]
+NEXT_TELEMETRY_DISABLED = "1"
+NODE_ENV = "production"

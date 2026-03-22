@@ -1,36 +1,107 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# clawproxy
+
+A lightweight, self-hostable Next.js service that provides secure public webhook ingress and queued event delivery for private OpenClaw nodes that can only communicate outbound.
+
+See [PLAN.md](./PLAN.md) for the full product specification and architectural decisions.
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 22+
+- A [Neon](https://neon.tech) Postgres database
+- A [Neon Auth](https://neon.tech/docs/guides/neon-auth) project
+
+### Environment variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `DATABASE_URL` | Yes | Neon Postgres connection string |
+| `NEON_AUTH_BASE_URL` | Yes | Neon Auth base URL (server-side) |
+| `NEON_AUTH_COOKIE_SECRET` | Yes | Secret used to sign session cookies (min 32 chars) |
+| `NEXT_PUBLIC_NEON_AUTH_BASE_URL` | Yes | Neon Auth base URL (embedded in the client bundle at build time) |
+
+Copy `.env.example` (if present) to `.env.local` and fill in the values before running locally.
+
+### Local development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Database
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run db:generate   # generate migrations from schema changes
+npm run db:migrate    # apply migrations to the database
+```
 
-## Learn More
+## Deployment
 
-To learn more about Next.js, take a look at the following resources:
+### Docker
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The project ships with a multi-stage `Dockerfile` that produces a minimal production image using [Next.js standalone output](https://nextjs.org/docs/app/api-reference/next-config-js/output#automatically-copying-needed-files).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Build the image**
 
-## Deploy on Vercel
+`NEXT_PUBLIC_NEON_AUTH_BASE_URL` is baked into the client bundle at build time, so it must be passed as a build argument:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+docker build \
+  --build-arg NEXT_PUBLIC_NEON_AUTH_BASE_URL=https://<your-neon-auth-url> \
+  -t clawproxy .
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Run the container**
+
+Pass runtime secrets as environment variables:
+
+```bash
+docker run -p 3000:3000 \
+  -e DATABASE_URL="postgresql://..." \
+  -e NEON_AUTH_BASE_URL="https://..." \
+  -e NEON_AUTH_COOKIE_SECRET="..." \
+  clawproxy
+```
+
+The app listens on port `3000` by default. Override with `-e PORT=<port>`.
+
+### Nixpacks
+
+The project includes a `nixpacks.toml` that configures the build for [Nixpacks-compatible platforms](https://nixpacks.com) (e.g. Railway, Render).
+
+Set the following environment variables in your platform's dashboard before deploying:
+
+| Variable | Notes |
+|---|---|
+| `DATABASE_URL` | Neon Postgres connection string |
+| `NEON_AUTH_BASE_URL` | Neon Auth base URL |
+| `NEON_AUTH_COOKIE_SECRET` | Session cookie signing secret |
+| `NEXT_PUBLIC_NEON_AUTH_BASE_URL` | Must be set **before** the build runs so it is inlined into the client bundle |
+
+Deploy with the Nixpacks CLI:
+
+```bash
+nixpacks build . --name clawproxy
+nixpacks run clawproxy
+```
+
+Or push to a connected platform (Railway, Render, etc.) and it will detect the `nixpacks.toml` automatically.
+
+## Scripts
+
+| Script | Description |
+|---|---|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run start` | Start production server |
+| `npm run lint` | Run ESLint |
+| `npm run test` | Run tests in watch mode |
+| `npm run test:run` | Run tests once |
+| `npm run db:generate` | Generate Drizzle migrations |
+| `npm run db:migrate` | Apply Drizzle migrations |
+| `npm run db:push` | Push schema to DB (dev only) |
+
