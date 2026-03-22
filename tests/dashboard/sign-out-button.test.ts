@@ -1,7 +1,11 @@
-import { createElement } from 'react';
-import { JSDOM } from 'jsdom';
-import { describe, expect, test, vi } from 'vitest';
-import { renderToStaticMarkup } from 'react-dom/server';
+// @vitest-environment jsdom
+import { act, createElement } from 'react';
+import { createRoot } from 'react-dom/client';
+import type { Root } from 'react-dom/client';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+
+// Tell React this environment supports act()
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const pushMock = vi.fn();
 const refreshMock = vi.fn();
@@ -21,22 +25,48 @@ vi.mock('@/app/lib/auth/client', () => ({
 }));
 
 describe('SignOutButton', () => {
-  test('renders a sign out button', async () => {
-    const { SignOutButton } = await import('@/app/dashboard/sign-out-button');
-    const html = renderToStaticMarkup(createElement(SignOutButton));
-    const dom = new JSDOM(html);
+  let container: HTMLElement;
+  let root: Root;
 
-    expect(dom.window.document.querySelector('button')?.textContent?.trim()).toBe('Sign out');
+  beforeEach(() => {
+    pushMock.mockClear();
+    refreshMock.mockClear();
+    signOutMock.mockClear();
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
   });
 
-  test('renders an error state when sign out fails on the server-side render snapshot', async () => {
-    const { SignOutButton } = await import('@/app/dashboard/sign-out-button');
-    const html = renderToStaticMarkup(createElement(SignOutButton));
-    const dom = new JSDOM(html);
+  afterEach(() => {
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
 
-    expect(dom.window.document.body.textContent).toContain('Sign out');
+  test('renders a sign out button', async () => {
+    const { SignOutButton } = await import('@/app/dashboard/sign-out-button');
+    await act(async () => {
+      root.render(createElement(SignOutButton));
+    });
+
+    expect(container.querySelector('button')?.textContent?.trim()).toBe('Sign out');
+  });
+
+  test('shows an error message when sign out fails', async () => {
+    signOutMock.mockResolvedValue({ error: { message: 'Network error' } });
+    const { SignOutButton } = await import('@/app/dashboard/sign-out-button');
+
+    await act(async () => {
+      root.render(createElement(SignOutButton));
+    });
+
+    await act(async () => {
+      container.querySelector('button')?.click();
+    });
+
+    expect(container.textContent).toContain('Network error');
     expect(pushMock).not.toHaveBeenCalled();
     expect(refreshMock).not.toHaveBeenCalled();
-    expect(signOutMock).not.toHaveBeenCalled();
   });
 });
