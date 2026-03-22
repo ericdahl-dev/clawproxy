@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 
-import { requireNodeFromRequest } from '@/app/lib/auth/require-node';
+import { AuthError, requireNodeFromRequest } from '@/app/lib/auth/require-node';
 import { sql } from '@/app/lib/db';
 import {
+  AckValidationError,
   summarizeAckedEvents,
   validateAckEventIds,
   type AckUpdateRow,
@@ -31,15 +32,16 @@ export async function POST(request: Request) {
       ...summarizeAckedEvents(updatedRows),
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unauthorized';
-    const status = message === 'eventIds are required' || message === 'eventIds must be non-empty strings' ? 400 : 401;
+    if (error instanceof AckValidationError) {
+      return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
+    }
 
-    return NextResponse.json(
-      {
-        ok: false,
-        error: message,
-      },
-      { status }
-    );
+    if (error instanceof AuthError) {
+      return NextResponse.json({ ok: false, error: error.message }, { status: 401 });
+    }
+
+    console.error('Unexpected error in node ack:', error);
+
+    return NextResponse.json({ ok: false, error: 'Internal server error' }, { status: 500 });
   }
 }
