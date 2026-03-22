@@ -101,6 +101,7 @@ Or push to a connected platform (Railway, Render, etc.) and it will detect the `
 | `npm run lint` | Run ESLint |
 | `npm run test` | Run tests in watch mode |
 | `npm run test:run` | Run tests once |
+| `npm run test:coverage` | Run tests with V8 coverage report (`coverage/`) |
 | `npm run db:generate` | Generate Drizzle migrations |
 | `npm run db:migrate` | Apply Drizzle migrations |
 | `npm run db:push` | Push schema to DB (dev only) |
