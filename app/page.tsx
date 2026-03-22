@@ -1,3 +1,4 @@
+import { ArchitectureDiagram } from '@/components/app/architecture-diagram';
 import { Button } from '@/components/ui/button';
 
 const proofPoints = [
@@ -254,6 +255,10 @@ export default function Home() {
               </div>
             ))}
           </div>
+        </section>
+
+        <section className="py-6 lg:py-10">
+          <ArchitectureDiagram />
         </section>
 
         <section className="py-8">
