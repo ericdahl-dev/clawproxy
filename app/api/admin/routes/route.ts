@@ -22,12 +22,14 @@ export async function GET() {
       .select({
         id: routes.id,
         nodeId: routes.nodeId,
+        nodeName: nodes.name,
         slug: routes.slug,
         enabled: routes.enabled,
         createdAt: routes.createdAt,
         updatedAt: routes.updatedAt,
       })
       .from(routes)
+      .leftJoin(nodes, eq(routes.nodeId, nodes.id))
       .where(eq(routes.userId, userId))
       .orderBy(desc(routes.createdAt));
 
