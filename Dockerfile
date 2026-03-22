@@ -17,10 +17,13 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Build-time env (Next inlines NEXT_PUBLIC_*; Neon Auth and DB modules load during `next build`).
+# NEON_AUTH_COOKIE_SECRET gets a placeholder because @neondatabase/auth validates
+# the 32-char minimum at import time during page-data collection; the real secret
+# is supplied at runtime via the container environment.
 ARG NEXT_PUBLIC_NEON_AUTH_BASE_URL
 ARG DATABASE_URL
 ARG NEON_AUTH_BASE_URL
-ARG NEON_AUTH_COOKIE_SECRET
+ARG NEON_AUTH_COOKIE_SECRET=build-time-placeholder-not-a-real-secret
 
 ENV NEXT_PUBLIC_NEON_AUTH_BASE_URL=$NEXT_PUBLIC_NEON_AUTH_BASE_URL \
     DATABASE_URL=$DATABASE_URL \
@@ -28,8 +31,8 @@ ENV NEXT_PUBLIC_NEON_AUTH_BASE_URL=$NEXT_PUBLIC_NEON_AUTH_BASE_URL \
     NEON_AUTH_COOKIE_SECRET=$NEON_AUTH_COOKIE_SECRET
 
 RUN test -n "$NEXT_PUBLIC_NEON_AUTH_BASE_URL" && test -n "$DATABASE_URL" && \
-    test -n "$NEON_AUTH_BASE_URL" && test -n "$NEON_AUTH_COOKIE_SECRET" || \
-    (echo "ERROR: Docker build requires --build-arg NEXT_PUBLIC_NEON_AUTH_BASE_URL, DATABASE_URL, NEON_AUTH_BASE_URL, NEON_AUTH_COOKIE_SECRET" >&2; exit 1)
+    test -n "$NEON_AUTH_BASE_URL" || \
+    (echo "ERROR: Docker build requires --build-arg NEXT_PUBLIC_NEON_AUTH_BASE_URL, DATABASE_URL, NEON_AUTH_BASE_URL" >&2; exit 1)
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
