@@ -5,8 +5,9 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-COPY package.json package-lock.json ./
-RUN npm ci
+COPY package.json yarn.lock .yarnrc.yml ./
+COPY .yarn/releases ./.yarn/releases
+RUN corepack enable && yarn install --immutable
 
 # ---- builder stage: build the Next.js application ----
 FROM base AS builder
@@ -32,7 +33,7 @@ RUN test -n "$NEXT_PUBLIC_NEON_AUTH_BASE_URL" && test -n "$DATABASE_URL" && \
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN npm run build
+RUN yarn build
 
 # ---- runner stage: minimal production image ----
 FROM base AS runner

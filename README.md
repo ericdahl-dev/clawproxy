@@ -25,9 +25,12 @@ Copy `.env.example` (if present) to `.env.local` and fill in the values before r
 
 ### Local development
 
+Enable Corepack once (ships with Node 22) so the pinned Yarn version from `packageManager` is used:
+
 ```bash
-npm install
-npm run dev
+corepack enable
+yarn install
+yarn dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
@@ -35,8 +38,8 @@ Open [http://localhost:3000](http://localhost:3000).
 ### Database
 
 ```bash
-npm run db:generate   # generate migrations from schema changes
-npm run db:migrate    # apply migrations to the database
+yarn db:generate   # generate migrations from schema changes
+yarn db:migrate    # apply migrations to the database
 ```
 
 ## Deployment
@@ -95,14 +98,14 @@ Or push to a connected platform (Railway, Render, etc.) and it will detect the `
 
 | Script | Description |
 |---|---|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm run start` | Start production server |
-| `npm run lint` | Run ESLint |
-| `npm run test` | Run tests in watch mode |
-| `npm run test:run` | Run tests once |
-| `npm run test:coverage` | Run tests with V8 coverage report (`coverage/`) |
-| `npm run db:generate` | Generate Drizzle migrations |
-| `npm run db:migrate` | Apply Drizzle migrations |
-| `npm run db:push` | Push schema to DB (dev only) |
+| `yarn dev` | Start development server |
+| `yarn build` | Build for production |
+| `yarn start` | Start production server |
+| `yarn lint` | Run ESLint |
+| `yarn test` | Run tests in watch mode |
+| `yarn test:run` | Run tests once |
+| `yarn test:coverage` | Run tests with V8 coverage report (`coverage/`) |
+| `yarn db:generate` | Generate Drizzle migrations |
+| `yarn db:migrate` | Apply Drizzle migrations |
+| `yarn db:push` | Push schema to DB (dev only) |
 
