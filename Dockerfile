@@ -15,12 +15,20 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# NEXT_PUBLIC_* variables are inlined at build time.
-# Pass them via --build-arg when running docker build, e.g.:
-#   --build-arg NEXT_PUBLIC_NEON_AUTH_BASE_URL=https://...
+# Build-time env (Next inlines NEXT_PUBLIC_*; Neon Auth and DB modules load during `next build`).
 ARG NEXT_PUBLIC_NEON_AUTH_BASE_URL
-ENV NEXT_PUBLIC_NEON_AUTH_BASE_URL=$NEXT_PUBLIC_NEON_AUTH_BASE_URL
-RUN test -n "$NEXT_PUBLIC_NEON_AUTH_BASE_URL" || (echo "ERROR: NEXT_PUBLIC_NEON_AUTH_BASE_URL build arg is required. Provide it with --build-arg NEXT_PUBLIC_NEON_AUTH_BASE_URL=..." >&2; exit 1)
+ARG DATABASE_URL
+ARG NEON_AUTH_BASE_URL
+ARG NEON_AUTH_COOKIE_SECRET
+
+ENV NEXT_PUBLIC_NEON_AUTH_BASE_URL=$NEXT_PUBLIC_NEON_AUTH_BASE_URL \
+    DATABASE_URL=$DATABASE_URL \
+    NEON_AUTH_BASE_URL=$NEON_AUTH_BASE_URL \
+    NEON_AUTH_COOKIE_SECRET=$NEON_AUTH_COOKIE_SECRET
+
+RUN test -n "$NEXT_PUBLIC_NEON_AUTH_BASE_URL" && test -n "$DATABASE_URL" && \
+    test -n "$NEON_AUTH_BASE_URL" && test -n "$NEON_AUTH_COOKIE_SECRET" || \
+    (echo "ERROR: Docker build requires --build-arg NEXT_PUBLIC_NEON_AUTH_BASE_URL, DATABASE_URL, NEON_AUTH_BASE_URL, NEON_AUTH_COOKIE_SECRET" >&2; exit 1)
 
 ENV NEXT_TELEMETRY_DISABLED=1
 

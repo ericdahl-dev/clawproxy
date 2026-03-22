@@ -62,5 +62,8 @@ jobs:
           push: false
           build-args: |
             NEXT_PUBLIC_NEON_AUTH_BASE_URL=https://example.neon.tech/neondb/auth
+            DATABASE_URL=postgresql://user:password@example.com/neondb?sslmode=require
+            NEON_AUTH_BASE_URL=https://example.neon.tech/neondb/auth
+            NEON_AUTH_COOKIE_SECRET=test-test-test-test-test-test-test-test
           cache-from: type=gha
           cache-to: type=gha,mode=max
