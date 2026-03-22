@@ -6,9 +6,9 @@ on:
     branches:
       - master
       - main
-      - 'feat/**'
-      - 'fix/**'
-      - 'ci/**'
+
+permissions:
+  contents: read
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
