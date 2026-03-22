@@ -44,6 +44,8 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+# DATABASE_URL must be supplied at container runtime (Neon dashboard connection string).
+# The build-time DATABASE_URL is only for `next build`; the app reads the env var when the server runs.
 
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs

@@ -2,20 +2,21 @@ import { describe, expect, test, vi } from 'vitest';
 
 const mockRequireAdminUser = vi.hoisted(() => vi.fn());
 
-const { mockDb, mockDbOrderBy, mockDbSelectLimit, mockDbInsertReturning } = vi.hoisted(() => {
+const { mockDb, mockDbOrderBy, mockDbInsertReturning } = vi.hoisted(() => {
   const mockDbOrderBy = vi.fn().mockResolvedValue([]);
   const mockDbSelectWhere = vi.fn().mockReturnValue({ orderBy: mockDbOrderBy });
+  const mockDbSelectLeftJoin = vi.fn().mockReturnValue({ where: mockDbSelectWhere });
 
   const mockDbSelectLimit = vi.fn().mockResolvedValue([]);
   const mockDbSelectWhere2 = vi.fn().mockReturnValue({ limit: mockDbSelectLimit });
 
   // select() is called for two different queries in the route:
-  // 1. listing routes (where → orderBy)
+  // 1. listing routes (leftJoin → where → orderBy)
   // 2. ownership check (where → limit)
   // We alternate returns based on call order.
   const mockDbSelectFrom = vi.fn();
   mockDbSelectFrom
-    .mockReturnValueOnce({ where: mockDbSelectWhere }) // list routes
+    .mockReturnValueOnce({ leftJoin: mockDbSelectLeftJoin }) // list routes
     .mockReturnValue({ where: mockDbSelectWhere2 }); // ownership check (and subsequent)
 
   const mockDbInsertReturning = vi.fn().mockResolvedValue([]);
@@ -26,7 +27,7 @@ const { mockDb, mockDbOrderBy, mockDbSelectLimit, mockDbInsertReturning } = vi.h
     insert: vi.fn().mockReturnValue({ values: mockDbInsertValues }),
   };
 
-  return { mockDb, mockDbOrderBy, mockDbSelectLimit, mockDbInsertReturning };
+  return { mockDb, mockDbOrderBy, mockDbInsertReturning };
 });
 
 vi.mock('@/app/lib/auth/require-admin', () => ({

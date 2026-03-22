@@ -42,30 +42,10 @@ export default async function DashboardLayout({
           </div>
         </header>
 
-        <section className="grid flex-1 gap-6 lg:grid-cols-[1.6fr_0.9fr]">
+        <section className="flex-1">
           <div className="border-border/70 bg-card/70 rounded-[1.75rem] border p-6 shadow-lg shadow-black/15 backdrop-blur">
             {children}
           </div>
-
-          <aside className="border-border/70 bg-card/60 rounded-[1.75rem] border p-6 shadow-lg shadow-black/15 backdrop-blur">
-            <p className="text-brand-accent text-xs font-semibold tracking-[0.28em] uppercase">
-              Quick links
-            </p>
-            <div className="mt-4 space-y-3 text-sm">
-              <div>
-                <p className="font-medium">Nodes</p>
-                <p className="text-muted-foreground">Manage node registration and connection health.</p>
-              </div>
-              <div>
-                <p className="font-medium">Routes</p>
-                <p className="text-muted-foreground">Create and inspect webhook ingress routes.</p>
-              </div>
-              <div>
-                <p className="font-medium">Events</p>
-                <p className="text-muted-foreground">Review delivery history and failures.</p>
-              </div>
-            </div>
-          </aside>
         </section>
       </div>
     </main>
