@@ -1,36 +1,111 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# clawproxy
 
-## Getting Started
+clawproxy is a public webhook relay for private OpenClaw nodes.
+It accepts inbound webhook traffic, stores it durably in Postgres, and lets private nodes pull queued events over authenticated outbound requests.
 
-First, run the development server:
+## Requirements
+
+- Node.js 22+
+- npm
+- Postgres / Neon database
+
+## Local development
+
+Install dependencies:
+
+```bash
+npm ci
+```
+
+Start the dev server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Run tests:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run test:run
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Build for production:
 
-## Learn More
+```bash
+npm run build
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Required environment variables
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+clawproxy currently expects these environment variables at runtime:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `DATABASE_URL`
+- `NEON_AUTH_BASE_URL`
+- `NEON_AUTH_COOKIE_SECRET`
+- `NEXT_PUBLIC_NEON_AUTH_BASE_URL`
 
-## Deploy on Vercel
+Optional deployment variables:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `HOSTNAME` (default `0.0.0.0` for container/server platforms)
+- `PORT` (default `3000`)
+- `NODE_ENV` (set to `production` in deployed environments)
+- `NEXT_TELEMETRY_DISABLED=1` to disable Next.js telemetry in deployments
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Standalone production build
+
+This repo uses Next.js standalone output for deployment builds.
+
+Build the deployable artifact:
+
+```bash
+npm run build:standalone
+```
+
+Start the standalone server directly:
+
+```bash
+node .next/standalone/server.js
+```
+
+## Docker deployment
+
+Build the image:
+
+```bash
+docker build -t clawproxy .
+```
+
+Run it:
+
+```bash
+docker run --rm -p 3000:3000 \
+  -e DATABASE_URL=postgres://user:pass@host:5432/db \
+  -e NEON_AUTH_BASE_URL=https://example-auth.neon.tech \
+  -e NEON_AUTH_COOKIE_SECRET=replace-me \
+  -e NEXT_PUBLIC_NEON_AUTH_BASE_URL=https://example-auth.neon.tech \
+  clawproxy
+```
+
+The container starts with:
+
+```bash
+node server.js
+```
+
+## Nixpacks deployment
+
+A `nixpacks.toml` file is included for Nixpacks-compatible platforms.
+
+Configured build command:
+
+```bash
+npm run build:standalone
+```
+
+Configured start command:
+
+```bash
+node .next/standalone/server.js
+```
+
+Make sure the platform provides the required runtime environment variables listed above.

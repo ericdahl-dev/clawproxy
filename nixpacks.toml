@@ -1,0 +1,17 @@
+[variables]
+NODE_ENV = "production"
+HOSTNAME = "0.0.0.0"
+PORT = "3000"
+NEXT_TELEMETRY_DISABLED = "1"
+
+[phases.setup]
+nixPkgs = ["nodejs_22", "npm-10_x"]
+
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = ["npm run build:standalone"]
+
+[start]
+cmd = "node .next/standalone/server.js"
