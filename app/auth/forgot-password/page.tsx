@@ -4,10 +4,12 @@ import Link from 'next/link';
 import { FormEvent, useState } from 'react';
 
 import { createNeonClientAuth } from '@/app/lib/auth/client';
+import { useRedirect127ToLocalhost } from '@/app/lib/auth/dev-origin';
 
 export const dynamic = 'force-dynamic';
 
 export default function ForgotPasswordPage() {
+  useRedirect127ToLocalhost();
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);

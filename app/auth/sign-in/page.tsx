@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
 
 import { createNeonClientAuth } from '@/app/lib/auth/client';
+import { useRedirect127ToLocalhost } from '@/app/lib/auth/dev-origin';
 
 export const dynamic = 'force-dynamic';
 
 export default function SignInPage() {
+  useRedirect127ToLocalhost();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
