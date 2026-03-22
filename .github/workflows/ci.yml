@@ -1,14 +1,13 @@
 name: CI
 
+# pull_request: validates every PR branch. push: only default branches — avoids duplicate
+# runs when both fire for the same change (push to feat/* also opens/syncs a PR).
 on:
   pull_request:
   push:
     branches:
       - master
       - main
-      - 'feat/**'
-      - 'fix/**'
-      - 'ci/**'
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
