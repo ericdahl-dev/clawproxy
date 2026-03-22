@@ -189,6 +189,10 @@ export function NodesClient({ initialNodes }: Props) {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [nodeToDelete, setNodeToDelete] = useState<NodeRow | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [nodeToRegenerate, setNodeToRegenerate] = useState<NodeRow | null>(null);
+  const [regenerateLoading, setRegenerateLoading] = useState(false);
+  const [regeneratedToken, setRegeneratedToken] = useState<string | null>(null);
+  const [regeneratedTokenCopied, setRegeneratedTokenCopied] = useState(false);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -254,6 +258,34 @@ export function NodesClient({ initialNodes }: Props) {
     } finally {
       setDeleteLoading(false);
     }
+  }
+
+  async function handleRegenerateToken() {
+    if (!nodeToRegenerate) return;
+    setRegenerateLoading(true);
+
+    try {
+      const res = await fetch(`/api/admin/nodes/${nodeToRegenerate.id}/regenerate-token`, {
+        method: 'POST',
+        credentials: 'same-origin',
+      });
+      const data = (await res.json()) as { ok: boolean; token?: string; error?: string };
+
+      if (data.ok && data.token) {
+        setNodeToRegenerate(null);
+        setRegeneratedToken(data.token);
+        setRegeneratedTokenCopied(false);
+      }
+    } finally {
+      setRegenerateLoading(false);
+    }
+  }
+
+  async function handleCopyRegeneratedToken() {
+    if (!regeneratedToken) return;
+    await navigator.clipboard.writeText(regeneratedToken);
+    setRegeneratedTokenCopied(true);
+    setTimeout(() => setRegeneratedTokenCopied(false), 2000);
   }
 
   async function handleCopyToken() {
@@ -370,6 +402,13 @@ export function NodesClient({ initialNodes }: Props) {
                           Connect
                         </Button>
                         <Button
+                          variant="outline"
+                          size="xs"
+                          onClick={() => setNodeToRegenerate(node)}
+                        >
+                          Regen token
+                        </Button>
+                        <Button
                           variant="destructive"
                           size="xs"
                           onClick={() => setNodeToDelete(node)}
@@ -469,6 +508,65 @@ export function NodesClient({ initialNodes }: Props) {
                 Cancel
               </Button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {nodeToRegenerate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="border-border/80 bg-card w-full max-w-sm rounded-2xl border p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold">Regenerate token?</h3>
+            <p className="text-muted-foreground mt-2 text-sm">
+              This will invalidate the current token for{' '}
+              <span className="text-foreground font-medium">{nodeToRegenerate.name}</span>. The node
+              will not be able to connect until it is updated with the new token.
+            </p>
+            <div className="mt-5 flex gap-2">
+              <Button
+                size="sm"
+                disabled={regenerateLoading}
+                onClick={handleRegenerateToken}
+                className="flex-1"
+              >
+                {regenerateLoading ? 'Regenerating…' : 'Regenerate token'}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setNodeToRegenerate(null)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {regeneratedToken && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="border-border/80 bg-card w-full max-w-lg rounded-2xl border p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold">New token generated</h3>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Copy your new bearer token now — it won&apos;t be shown again.
+            </p>
+            <div className="border-border/60 bg-background/60 mt-4 flex items-center gap-2 overflow-hidden rounded-lg border px-3 py-2">
+              <code className="flex-1 min-w-0 text-xs break-all">{regeneratedToken}</code>
+              <Button
+                size="xs"
+                variant="outline"
+                onClick={handleCopyRegeneratedToken}
+                className="shrink-0"
+              >
+                {regeneratedTokenCopied ? 'Copied!' : 'Copy'}
+              </Button>
+            </div>
+            <p className="text-muted-foreground mt-3 text-xs">
+              Update your OpenClaw node configuration with this new token.
+            </p>
+            <Button className="mt-4 w-full" onClick={() => setRegeneratedToken(null)}>
+              Done
+            </Button>
           </div>
         </div>
       )}
