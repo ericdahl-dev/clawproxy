@@ -13,5 +13,18 @@ export default defineConfig({
     environment: 'node',
     globals: true,
     include: ['tests/**/*.test.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'text-summary', 'html', 'json-summary'],
+      reportsDirectory: './coverage',
+      include: ['app/**/*.{ts,tsx}', 'db/**/*.ts', 'proxy.ts'],
+      exclude: [
+        '**/*.d.ts',
+        'app/**/layout.tsx',
+        '**/types/**',
+        'tests/**',
+        'node_modules/**',
+      ],
+    },
   },
 });
