@@ -5,6 +5,8 @@ import { requireAdminUser } from '@/app/lib/auth/require-admin';
 import { db } from '@/app/lib/db/client';
 import { nodes } from '@/db/schema';
 
+export const dynamic = 'force-dynamic';
+
 export async function DELETE(
   _request: Request,
   context: { params: Promise<{ id: string }> }

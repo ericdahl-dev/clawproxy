@@ -6,6 +6,17 @@ import { requireAdminUser } from '@/app/lib/auth/require-admin';
 import { db } from '@/app/lib/db/client';
 import { nodes } from '@/db/schema';
 
+export const dynamic = 'force-dynamic';
+
+function isUniqueViolation(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code: string }).code === '23505'
+  );
+}
+
 function slugifyNodeName(name: string) {
   return name
     .trim()
@@ -40,24 +51,36 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  let userId: string;
   try {
     const user = await requireAdminUser();
-    const userId = user.id;
-    const body = (await request.json()) as { name?: string; slug?: string };
-    const name = body.name?.trim();
+    userId = user.id;
+  } catch {
+    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
+  }
 
-    if (!name) {
-      return NextResponse.json({ ok: false, error: 'Name is required' }, { status: 400 });
-    }
+  let body: { name?: string; slug?: string };
+  try {
+    body = (await request.json()) as { name?: string; slug?: string };
+  } catch {
+    return NextResponse.json({ ok: false, error: 'Invalid JSON body' }, { status: 400 });
+  }
 
-    const slug = body.slug?.trim() || slugifyNodeName(name);
+  const name = body.name?.trim();
 
-    if (!slug) {
-      return NextResponse.json({ ok: false, error: 'Slug is required' }, { status: 400 });
-    }
+  if (!name) {
+    return NextResponse.json({ ok: false, error: 'Name is required' }, { status: 400 });
+  }
 
-    const { token, tokenHash } = generateNodeToken();
+  const slug = body.slug?.trim() || slugifyNodeName(name);
 
+  if (!slug) {
+    return NextResponse.json({ ok: false, error: 'Slug is required' }, { status: 400 });
+  }
+
+  const { token, tokenHash } = generateNodeToken();
+
+  try {
     const inserted = await db
       .insert(nodes)
       .values({
@@ -79,7 +102,20 @@ export async function POST(request: Request) {
       node: inserted[0],
       token,
     });
-  } catch {
-    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
+  } catch (error) {
+    if (isUniqueViolation(error)) {
+      return NextResponse.json(
+        { ok: false, error: 'That slug is already in use. Choose a different slug.' },
+        { status: 409 },
+      );
+    }
+    console.error('[POST /api/admin/nodes] insert failed', error);
+    return NextResponse.json(
+      {
+        ok: false,
+        error: 'Could not create node. Check your database connection and try again.',
+      },
+      { status: 500 },
+    );
   }
 }

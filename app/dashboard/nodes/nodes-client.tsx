@@ -90,18 +90,25 @@ export function NodesClient({ initialNodes }: Props) {
       const res = await fetch('/api/admin/nodes', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
+        credentials: 'same-origin',
         body: JSON.stringify({ name: nameInput, slug: slugInput || undefined }),
       });
 
-      const data = (await res.json()) as {
-        ok: boolean;
-        error?: string;
-        node?: NodeRow;
-        token?: string;
-      };
+      const text = await res.text();
+      let data: { ok: boolean; error?: string; node?: NodeRow; token?: string };
+      try {
+        data = text ? (JSON.parse(text) as typeof data) : { ok: false };
+      } catch {
+        setCreateError(
+          text.trimStart().startsWith('<')
+            ? `Got an HTML page instead of JSON (${res.status}). Try refreshing; if this persists, the request may have been redirected (e.g. session or proxy).`
+            : `Invalid response from server (${res.status}).`,
+        );
+        return;
+      }
 
       if (!data.ok || !data.node) {
-        setCreateError(data.error ?? 'Failed to create node');
+        setCreateError(data.error ?? `Failed to create node (${res.status})`);
         return;
       }
 
@@ -110,8 +117,13 @@ export function NodesClient({ initialNodes }: Props) {
       setNameInput('');
       setSlugInput('');
       setShowCreateForm(false);
-    } catch {
-      setCreateError('Network error. Please try again.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setCreateError(
+        message === 'Failed to fetch'
+          ? 'Could not reach the server. Check your connection and that the app is running.'
+          : `Request failed: ${message}`,
+      );
     } finally {
       setCreateLoading(false);
     }
