@@ -6,11 +6,11 @@ import { requireAdminUser } from '@/app/lib/auth/require-admin';
 import { UnauthorizedError } from '@/app/lib/auth/unauthorized-error';
 
 export function jsonOk(body: Record<string, unknown>, init?: ResponseInit) {
-  return NextResponse.json({ ok: true, ...body }, { status: init?.status ?? 200, ...init });
+  return NextResponse.json({ ...body, ok: true }, { ...init, status: init?.status ?? 200 });
 }
 
 export function jsonError(message: string, status: number, init?: ResponseInit) {
-  return NextResponse.json({ ok: false, error: message }, { status, ...init });
+  return NextResponse.json({ ok: false, error: message }, { ...init, status });
 }
 
 export async function withAdminUser(
