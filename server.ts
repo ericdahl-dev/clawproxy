@@ -7,6 +7,8 @@ import { WebSocketServer, type WebSocket, type RawData } from 'ws';
 import { addConnection, removeConnection } from './app/lib/ws/connection-manager';
 import type { WsEventPayload } from './app/lib/ws/protocol';
 
+type AckResultRow = { id: string };
+
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = process.env.HOSTNAME ?? '0.0.0.0';
 const port = parseInt(process.env.PORT ?? '3000', 10);
@@ -91,8 +93,7 @@ async function pushPendingEventsForNode(ws: WebSocket, nodeId: string): Promise<
       e.lease_expires_at::text AS "leaseExpiresAt",
       e.attempt_count AS "attemptCount"
   `;
-  for (const event of rows as WsEventPayload[]) {
-    ws.send(JSON.stringify({ type: 'event', ...event }));
+  for (const event of rows as WsEventPayload[]) {    ws.send(JSON.stringify({ type: 'event', ...event }));
   }
 }
 
@@ -116,7 +117,7 @@ async function handleAck(ws: WebSocket, nodeId: string, eventIds: unknown): Prom
       AND id IN ${db(validated)}
     RETURNING id
   `;
-  const ackedIds = (rows as { id: string }[]).map((r) => r.id);
+  const ackedIds = (rows as AckResultRow[]).map((r) => r.id);
   ws.send(JSON.stringify({ type: 'ack_ok', acked: ackedIds.length, eventIds: ackedIds }));
 }
 
