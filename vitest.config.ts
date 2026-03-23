@@ -25,6 +25,12 @@ export default defineConfig({
         'tests/**',
         'node_modules/**',
       ],
+      thresholds: {
+        statements: 70,
+        branches: 58,
+        functions: 58,
+        lines: 70,
+      },
     },
   },
 });
