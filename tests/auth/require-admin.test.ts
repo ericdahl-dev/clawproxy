@@ -7,18 +7,21 @@ vi.mock('@/app/lib/auth/server', () => ({
 }));
 
 import { requireAdminUser } from '@/app/lib/auth/require-admin';
+import { UnauthorizedError } from '@/app/lib/auth/unauthorized-error';
 
 describe('requireAdminUser', () => {
-  test('throws Unauthorized when there is no active session', async () => {
+  test('throws UnauthorizedError when there is no active session', async () => {
     mockGetSession.mockResolvedValue({ data: null });
 
-    await expect(requireAdminUser()).rejects.toThrow('Unauthorized');
+    const err = await requireAdminUser().catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(UnauthorizedError);
+    expect(err).toMatchObject({ name: 'UnauthorizedError', message: 'Unauthorized' });
   });
 
-  test('throws Unauthorized when the session has no user', async () => {
+  test('throws UnauthorizedError when the session has no user', async () => {
     mockGetSession.mockResolvedValue({ data: { user: null } });
 
-    await expect(requireAdminUser()).rejects.toThrow('Unauthorized');
+    await expect(requireAdminUser()).rejects.toBeInstanceOf(UnauthorizedError);
   });
 
   test('returns the user when a valid session exists', async () => {

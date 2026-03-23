@@ -2,31 +2,17 @@
 
 import { useState } from 'react';
 
+import { adminJson } from '@/app/lib/dashboard/admin-fetch';
+import type { NodeOption, RouteRow } from '@/app/lib/dashboard/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
-
-type RouteRow = {
-  id: string;
-  nodeId: string;
-  nodeName: string | null;
-  slug: string;
-  enabled: boolean;
-  createdAt: Date | string;
-};
-
-type NodeOption = {
-  id: string;
-  name: string;
-};
+import { cn } from '@/app/lib/utils';
 
 type Props = {
   initialRoutes: RouteRow[];
   availableNodes: NodeOption[];
 };
-
-type PatchRouteJson = { ok: boolean; route?: { enabled: boolean }; error?: string };
 
 function EnabledBadge({ enabled }: { enabled: boolean }) {
   return (
@@ -69,33 +55,29 @@ export function RoutesClient({ initialRoutes, availableNodes }: Props) {
     setCreateError(null);
 
     try {
-      const res = await fetch('/api/admin/routes', {
+      const result = await adminJson<{ ok: true; route: RouteRow }>('/api/admin/routes', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        credentials: 'same-origin',
         body: JSON.stringify({ nodeId: nodeIdInput, slug: slugInput }),
       });
 
-      const text = await res.text();
-      let data: { ok: boolean; error?: string; route?: RouteRow };
-      try {
-        data = text ? (JSON.parse(text) as typeof data) : { ok: false };
-      } catch {
+      if (!result.ok) {
         setCreateError(
-          text.trimStart().startsWith('<')
-            ? `Got an HTML page instead of JSON (${res.status}). Try refreshing.`
-            : `Invalid response from server (${res.status}).`,
+          result.error === 'Failed to fetch'
+            ? 'Could not reach the server. Check your connection and that the app is running.'
+            : result.error,
         );
         return;
       }
 
-      if (!data.ok || !data.route) {
-        setCreateError(data.error ?? `Failed to create route (${res.status})`);
+      const { route } = result.data;
+      if (!route) {
+        setCreateError('Failed to create route.');
         return;
       }
 
       const node = availableNodes.find((n) => n.id === nodeIdInput);
-      const newRoute: RouteRow = { ...data.route, nodeName: node?.name ?? null };
+      const newRoute: RouteRow = { ...route, nodeName: node?.name ?? null };
       setRouteList((prev) => [newRoute, ...prev]);
       setSlugInput('');
       setNodeIdInput(availableNodes[0]?.id ?? '');
@@ -118,21 +100,15 @@ export function RoutesClient({ initialRoutes, availableNodes }: Props) {
     setDeleteError(null);
 
     try {
-      const res = await fetch(`/api/admin/routes/${routeToDelete.id}`, { method: 'DELETE' });
+      const result = await adminJson<{ ok: true }>(`/api/admin/routes/${routeToDelete.id}`, {
+        method: 'DELETE',
+      });
 
-      let data: { ok: boolean; error?: string } | null = null;
-      const contentType = res.headers.get('content-type') ?? '';
-      if (contentType.includes('application/json')) {
-        try {
-          data = (await res.json()) as { ok: boolean; error?: string };
-        } catch {
-          // ignore JSON parse errors; fall back to a generic error message
-        }
-      }
-
-      if (!res.ok || !data?.ok) {
+      if (!result.ok) {
         setDeleteError(
-          data?.error ?? `Failed to delete route (status ${res.status}). Please try again.`,
+          result.error === 'Failed to fetch'
+            ? 'Failed to delete route due to a network error. Please try again.'
+            : result.error,
         );
         return;
       }
@@ -151,33 +127,28 @@ export function RoutesClient({ initialRoutes, availableNodes }: Props) {
     setToggleError(null);
 
     try {
-      const res = await fetch(`/api/admin/routes/${route.id}`, {
+      const result = await adminJson<{ ok: true; route?: { enabled: boolean } }>(
+        `/api/admin/routes/${route.id}`,
+        {
         method: 'PATCH',
         headers: { 'content-type': 'application/json' },
-        credentials: 'same-origin',
         body: JSON.stringify({ enabled: !route.enabled }),
-      });
+        },
+      );
 
-      let data: PatchRouteJson | null = null;
-      const contentType = res.headers.get('content-type') ?? '';
-      if (contentType.includes('application/json')) {
-        try {
-          data = (await res.json()) as PatchRouteJson;
-        } catch {
-          // ignore JSON parse errors; fall back to error state
-        }
-      }
-
-      if (!res.ok || !data?.ok) {
+      if (!result.ok) {
         setToggleError(
-          data?.error ?? `Failed to update route (status ${res.status}). Please try again.`,
+          result.error === 'Failed to fetch'
+            ? 'Failed to update route due to a network error. Please try again.'
+            : result.error,
         );
         return;
       }
 
+      const data = result.data;
       if (data.route) {
         setRouteList((prev) =>
-          prev.map((r) => (r.id === route.id ? { ...r, enabled: data!.route!.enabled } : r)),
+          prev.map((r) => (r.id === route.id ? { ...r, enabled: data.route!.enabled } : r)),
         );
       }
     } catch {

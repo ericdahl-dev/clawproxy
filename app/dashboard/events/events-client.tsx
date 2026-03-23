@@ -3,36 +3,10 @@
 import { useCallback, useState } from 'react';
 
 import { formatRelativeTime, formatTimestamp } from '@/app/lib/dashboard/datetime';
+import { adminJson } from '@/app/lib/dashboard/admin-fetch';
+import type { EventDetail, EventRow, EventStatus, NodeOption } from '@/app/lib/dashboard/types';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-
-type EventStatus = 'pending' | 'leased' | 'delivered' | 'failed' | 'expired';
-
-type EventRow = {
-  id: string;
-  nodeId: string;
-  nodeName: string | null;
-  routeId: string;
-  status: EventStatus;
-  contentType: string | null;
-  receivedAt: Date | string;
-  leaseExpiresAt: Date | string | null;
-  attemptCount: number;
-  ackedAt: Date | string | null;
-  expiresAt: Date | string;
-  createdAt: Date | string;
-};
-
-type EventDetail = EventRow & {
-  headersJson: unknown;
-  bodyText: string;
-  updatedAt: Date | string;
-};
-
-type NodeOption = {
-  id: string;
-  name: string;
-};
+import { cn } from '@/app/lib/utils';
 
 type Props = {
   initialEvents: EventRow[];
@@ -111,21 +85,20 @@ export function EventsClient({ initialEvents, availableNodes }: Props) {
         params.set('limit', String(PAGE_SIZE));
         params.set('offset', String(currentOffset));
 
-        const res = await fetch(`/api/admin/events?${params.toString()}`, {
-          credentials: 'same-origin',
-        });
-        const data = (await res.json()) as {
-          ok: boolean;
-          events?: EventRow[];
-          error?: string;
-        };
+        const result = await adminJson<{ ok: true; events: EventRow[] }>(
+          `/api/admin/events?${params.toString()}`,
+        );
 
-        if (!data.ok || !data.events) {
-          setFetchError(data.error ?? 'Failed to load events.');
+        if (!result.ok) {
+          setFetchError(
+            result.error === 'Failed to fetch'
+              ? 'Failed to load events. Please try again.'
+              : result.error,
+          );
           return;
         }
 
-        setEventList(data.events);
+        setEventList(result.data.events);
       } catch {
         setFetchError('Failed to load events. Please try again.');
       } finally {
@@ -177,20 +150,21 @@ export function EventsClient({ initialEvents, availableNodes }: Props) {
     setDetailError(null);
 
     try {
-      const res = await fetch(`/api/admin/events/${event.id}`, { credentials: 'same-origin' });
-      const data = (await res.json()) as {
-        ok: boolean;
-        event?: EventDetail;
-        error?: string;
-      };
+      const result = await adminJson<{ ok: true; event: EventDetail }>(
+        `/api/admin/events/${event.id}`,
+      );
 
-      if (!data.ok || !data.event) {
-        setDetailError(data.error ?? 'Failed to load event details.');
+      if (!result.ok) {
+        setDetailError(
+          result.error === 'Failed to fetch'
+            ? 'Failed to load event details. Please try again.'
+            : result.error,
+        );
         setDetailLoading(false);
         return;
       }
 
-      setSelectedEvent(data.event);
+      setSelectedEvent(result.data.event);
     } catch {
       setDetailError('Failed to load event details. Please try again.');
     } finally {
@@ -201,13 +175,15 @@ export function EventsClient({ initialEvents, availableNodes }: Props) {
   async function handleRetry(eventId: string) {
     setRetryLoading(true);
     try {
-      const res = await fetch(`/api/admin/events/${eventId}/retry`, {
+      const result = await adminJson<{ ok: true }>(`/api/admin/events/${eventId}/retry`, {
         method: 'POST',
-        credentials: 'same-origin',
       });
-      const data = (await res.json()) as { ok: boolean; error?: string };
-      if (!data.ok) {
-        setDetailError(data.error ?? 'Failed to retry event.');
+      if (!result.ok) {
+        setDetailError(
+          result.error === 'Failed to fetch'
+            ? 'Failed to retry event. Please try again.'
+            : result.error,
+        );
         return;
       }
       setSelectedEvent(null);

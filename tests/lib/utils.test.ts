@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { cn } from '@/lib/utils';
+import { cn } from '@/app/lib/utils';
 
 describe('cn', () => {
   test('joins multiple class strings', () => {

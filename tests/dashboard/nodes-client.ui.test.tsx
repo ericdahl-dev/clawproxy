@@ -71,7 +71,10 @@ describe('NodesClient', () => {
       confirmDelete!.click();
     });
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/admin/nodes/node-1', { method: 'DELETE' });
+    expect(fetchMock).toHaveBeenCalledWith('/api/admin/nodes/node-1', {
+      method: 'DELETE',
+      credentials: 'same-origin',
+    });
     expect(container.textContent).toContain('No nodes have been registered yet');
   });
 });

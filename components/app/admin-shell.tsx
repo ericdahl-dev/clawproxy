@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
+import { cn } from '@/app/lib/utils';
 
 type AdminShellProps = {
   eyebrow?: string;
