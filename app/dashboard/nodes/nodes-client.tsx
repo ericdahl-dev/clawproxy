@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 
+import { adminJson } from '@/app/lib/dashboard/admin-fetch';
+import type { NodeRow } from '@/app/lib/dashboard/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { cn } from '@/lib/utils';
+import { cn } from '@/app/lib/utils';
 
 function buildSkillYaml(origin: string, token?: string): string {
   const tokenValue = token ?? 'YOUR_NODE_TOKEN_HERE';
@@ -22,15 +24,6 @@ polling:
   interval_seconds: 30
   max_events: 10`;
 }
-
-type NodeRow = {
-  id: string;
-  name: string;
-  slug: string;
-  status: 'active' | 'disabled';
-  lastSeenAt: Date | string | null;
-  createdAt: Date | string;
-};
 
 type NodeHealth = 'active' | 'stale' | 'offline';
 
@@ -200,33 +193,29 @@ export function NodesClient({ initialNodes }: Props) {
     setCreateError(null);
 
     try {
-      const res = await fetch('/api/admin/nodes', {
+      const result = await adminJson<{ ok: true; node: NodeRow; token?: string }>('/api/admin/nodes', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        credentials: 'same-origin',
         body: JSON.stringify({ name: nameInput, slug: slugInput || undefined }),
       });
 
-      const text = await res.text();
-      let data: { ok: boolean; error?: string; node?: NodeRow; token?: string };
-      try {
-        data = text ? (JSON.parse(text) as typeof data) : { ok: false };
-      } catch {
+      if (!result.ok) {
         setCreateError(
-          text.trimStart().startsWith('<')
-            ? `Got an HTML page instead of JSON (${res.status}). Try refreshing; if this persists, the request may have been redirected (e.g. session or proxy).`
-            : `Invalid response from server (${res.status}).`,
+          result.error === 'Failed to fetch'
+            ? 'Could not reach the server. Check your connection and that the app is running.'
+            : result.error,
         );
         return;
       }
 
-      if (!data.ok || !data.node) {
-        setCreateError(data.error ?? `Failed to create node (${res.status})`);
+      const { node, token } = result.data;
+      if (!node) {
+        setCreateError('Failed to create node.');
         return;
       }
 
-      setNodeList((prev) => [data.node!, ...prev]);
-      setCreatedToken(data.token ?? null);
+      setNodeList((prev) => [node, ...prev]);
+      setCreatedToken(token ?? null);
       setTokenModalStep(1);
       setNameInput('');
       setSlugInput('');
@@ -248,10 +237,11 @@ export function NodesClient({ initialNodes }: Props) {
     setDeleteLoading(true);
 
     try {
-      const res = await fetch(`/api/admin/nodes/${nodeToDelete.id}`, { method: 'DELETE' });
-      const data = (await res.json()) as { ok: boolean; error?: string };
+      const result = await adminJson<{ ok: true }>(`/api/admin/nodes/${nodeToDelete.id}`, {
+        method: 'DELETE',
+      });
 
-      if (data.ok) {
+      if (result.ok) {
         setNodeList((prev) => prev.filter((n) => n.id !== nodeToDelete.id));
         setNodeToDelete(null);
       }
@@ -265,15 +255,14 @@ export function NodesClient({ initialNodes }: Props) {
     setRegenerateLoading(true);
 
     try {
-      const res = await fetch(`/api/admin/nodes/${nodeToRegenerate.id}/regenerate-token`, {
-        method: 'POST',
-        credentials: 'same-origin',
-      });
-      const data = (await res.json()) as { ok: boolean; token?: string; error?: string };
+      const result = await adminJson<{ ok: true; token: string }>(
+        `/api/admin/nodes/${nodeToRegenerate.id}/regenerate-token`,
+        { method: 'POST' },
+      );
 
-      if (data.ok && data.token) {
+      if (result.ok && result.data.token) {
         setNodeToRegenerate(null);
-        setRegeneratedToken(data.token);
+        setRegeneratedToken(result.data.token);
         setRegeneratedTokenCopied(false);
       }
     } finally {

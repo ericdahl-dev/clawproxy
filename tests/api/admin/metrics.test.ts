@@ -1,5 +1,8 @@
 import { describe, expect, test, vi } from 'vitest';
 
+import { UnauthorizedError } from '@/app/lib/auth/unauthorized-error';
+import { mockAdminUser as mockUser } from '../../helpers/admin-api-mocks';
+
 const mockRequireAdminUser = vi.hoisted(() => vi.fn());
 
 const { mockDb, mockDbGroupBy } = vi.hoisted(() => {
@@ -22,11 +25,9 @@ vi.mock('@/app/lib/db/client', () => ({ db: mockDb }));
 
 import { GET } from '@/app/api/admin/metrics/route';
 
-const mockUser = { id: 'user-1', email: 'admin@example.com' };
-
 describe('GET /api/admin/metrics', () => {
   test('returns 401 when user is not authenticated', async () => {
-    mockRequireAdminUser.mockRejectedValue(new Error('Unauthorized'));
+    mockRequireAdminUser.mockRejectedValue(new UnauthorizedError());
 
     const response = await GET();
     const body = await response.json();

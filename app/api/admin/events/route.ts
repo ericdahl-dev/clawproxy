@@ -1,8 +1,7 @@
 import { and, desc, eq, gte, inArray } from 'drizzle-orm';
-import { NextResponse } from 'next/server';
 
-import { requireAdminUser } from '@/app/lib/auth/require-admin';
 import { db } from '@/app/lib/db/client';
+import { jsonOk, withAdminUser } from '@/app/lib/http/admin-json';
 import { events, nodes } from '@/db/schema';
 
 const EVENT_STATUSES = ['pending', 'leased', 'delivered', 'failed', 'expired'] as const;
@@ -25,8 +24,7 @@ function parseDateRange(range: string | null): Date | null {
 }
 
 export async function GET(request: Request) {
-  try {
-    const user = await requireAdminUser();
+  return withAdminUser(async (user) => {
     const userId = user.id;
 
     const url = new URL(request.url);
@@ -81,8 +79,6 @@ export async function GET(request: Request) {
       .limit(limitValue)
       .offset(offsetValue);
 
-    return NextResponse.json({ ok: true, events: result });
-  } catch {
-    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
-  }
+    return jsonOk({ events: result });
+  });
 }
