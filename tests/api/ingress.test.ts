@@ -1,6 +1,6 @@
-import { describe, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-const { mockDb, mockDbSelectLimit, mockDbInsertReturning } = vi.hoisted(() => {
+const { mockDb, mockDbSelectLimit, mockDbInsertReturning, mockDbUpdate } = vi.hoisted(() => {
   const mockDbSelectLimit = vi.fn().mockResolvedValue([]);
   const mockDbSelectWhere = vi.fn().mockReturnValue({ limit: mockDbSelectLimit });
   const mockDbSelectFrom = vi.fn().mockReturnValue({ where: mockDbSelectWhere });
@@ -8,15 +8,27 @@ const { mockDb, mockDbSelectLimit, mockDbInsertReturning } = vi.hoisted(() => {
   const mockDbInsertReturning = vi.fn().mockResolvedValue([]);
   const mockDbInsertValues = vi.fn().mockReturnValue({ returning: mockDbInsertReturning });
 
+  const mockDbUpdate = vi.fn().mockResolvedValue([]);
+  const mockDbUpdateWhere = vi.fn().mockReturnValue({ returning: mockDbUpdate });
+  const mockDbUpdateSet = vi.fn().mockReturnValue({ where: mockDbUpdateWhere });
+
   const mockDb = {
     select: vi.fn().mockReturnValue({ from: mockDbSelectFrom }),
     insert: vi.fn().mockReturnValue({ values: mockDbInsertValues }),
+    update: vi.fn().mockReturnValue({ set: mockDbUpdateSet }),
   };
 
-  return { mockDb, mockDbSelectLimit, mockDbInsertReturning };
+  return { mockDb, mockDbSelectLimit, mockDbInsertReturning, mockDbUpdate };
 });
 
+const mockIsConnected = vi.hoisted(() => vi.fn().mockReturnValue(false));
+const mockPushEventToNode = vi.hoisted(() => vi.fn());
+
 vi.mock('@/app/lib/db/client', () => ({ db: mockDb }));
+vi.mock('@/app/lib/ws/connection-manager', () => ({
+  isConnected: mockIsConnected,
+  pushEventToNode: mockPushEventToNode,
+}));
 
 import { POST } from '@/app/api/ingress/[routeSlug]/route';
 
@@ -43,6 +55,14 @@ function makeContext(routeSlug: string) {
 }
 
 describe('POST /api/ingress/[routeSlug]', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockIsConnected.mockReturnValue(false);
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
   test('returns 404 when the route slug does not exist', async () => {
     mockDbSelectLimit.mockResolvedValue([]);
 
@@ -79,5 +99,61 @@ describe('POST /api/ingress/[routeSlug]', () => {
     expect(body.ok).toBe(true);
     // Verify insert was called (values mock was invoked)
     expect(mockDb.insert).toHaveBeenCalled();
+  });
+
+  test('leases and pushes event via WebSocket when node is connected', async () => {
+    mockIsConnected.mockReturnValue(true);
+    mockDbSelectLimit.mockResolvedValue([mockRoute]);
+    mockDbInsertReturning.mockResolvedValue([{ id: 'event-ws-1', status: 'pending' }]);
+
+    const leasedEvent = {
+      id: 'event-ws-1',
+      routeId: 'route-uuid-1',
+      headersJson: { 'x-custom': 'value' },
+      bodyText: '{"ws":true}',
+      contentType: 'application/json',
+      receivedAt: new Date('2024-01-01T00:00:00Z'),
+      leaseExpiresAt: new Date('2024-01-01T00:01:00Z'),
+      attemptCount: 1,
+    };
+    mockDbUpdate.mockResolvedValue([leasedEvent]);
+
+    const response = await POST(makeRequest('my-webhook', '{"ws":true}'), makeContext('my-webhook'));
+    const body = await response.json();
+
+    expect(response.status).toBe(202);
+    expect(body.ok).toBe(true);
+    expect(mockDb.update).toHaveBeenCalled();
+    expect(mockPushEventToNode).toHaveBeenCalledWith(
+      'node-uuid-1',
+      expect.objectContaining({
+        type: 'event',
+        id: 'event-ws-1',
+        routeSlug: 'my-webhook',
+      }),
+    );
+  });
+
+  test('skips WebSocket push when node is not connected', async () => {
+    mockIsConnected.mockReturnValue(false);
+    mockDbSelectLimit.mockResolvedValue([mockRoute]);
+    mockDbInsertReturning.mockResolvedValue([{ id: 'event-poll-1', status: 'pending' }]);
+
+    await POST(makeRequest('my-webhook'), makeContext('my-webhook'));
+
+    expect(mockDb.update).not.toHaveBeenCalled();
+    expect(mockPushEventToNode).not.toHaveBeenCalled();
+  });
+
+  test('skips WebSocket push when lease update returns no rows', async () => {
+    mockIsConnected.mockReturnValue(true);
+    mockDbSelectLimit.mockResolvedValue([mockRoute]);
+    mockDbInsertReturning.mockResolvedValue([{ id: 'event-race-1', status: 'pending' }]);
+    mockDbUpdate.mockResolvedValue([]); // race: already leased by pull
+
+    await POST(makeRequest('my-webhook'), makeContext('my-webhook'));
+
+    expect(mockDb.update).toHaveBeenCalled();
+    expect(mockPushEventToNode).not.toHaveBeenCalled();
   });
 });
