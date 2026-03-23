@@ -1,5 +1,8 @@
-export function buildSkillYaml(origin: string, token?: string): string {
+export function buildSkillYaml(origin: string, token?: string, forwardBaseUrl?: string): string {
   const tokenValue = token ?? 'YOUR_NODE_TOKEN_HERE';
+  const webhookUrl = forwardBaseUrl
+    ? `${forwardBaseUrl}/webhook/{routeSlug}`
+    : 'http://YOUR_OPENCLAW_HOST/webhook/{routeSlug}';
   return `name: clawproxy-relay
 version: "1.0"
 description: Pulls and delivers webhook events from clawproxy
@@ -11,7 +14,10 @@ connection:
 
 polling:
   interval_seconds: 30
-  max_events: 10`;
+  max_events: 10
+
+forward:
+  webhook_url: "${webhookUrl}"`;
 }
 
 export type NodeHealth = 'active' | 'stale' | 'offline';

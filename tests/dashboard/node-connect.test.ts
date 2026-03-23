@@ -15,6 +15,17 @@ describe('buildSkillYaml', () => {
     const yaml = buildSkillYaml('http://localhost:3000', 'secret-token');
     expect(yaml).toContain('token: "secret-token"');
   });
+
+  test('includes placeholder forward webhook_url when forwardBaseUrl is omitted', () => {
+    const yaml = buildSkillYaml('https://relay.example');
+    expect(yaml).toContain('forward:');
+    expect(yaml).toContain('webhook_url: "http://YOUR_OPENCLAW_HOST/webhook/{routeSlug}"');
+  });
+
+  test('embeds forwardBaseUrl in forward webhook_url', () => {
+    const yaml = buildSkillYaml('https://relay.example', 'tok', 'http://openclaw-host:8080');
+    expect(yaml).toContain('webhook_url: "http://openclaw-host:8080/webhook/{routeSlug}"');
+  });
 });
 
 describe('getNodeHealth', () => {
