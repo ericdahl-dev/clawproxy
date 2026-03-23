@@ -54,16 +54,17 @@ type ConnectGuideProps = {
 };
 
 function ConnectGuide({ origin, token, copiedField, onCopy, onClose }: ConnectGuideProps) {
+  const [forwardBaseUrl, setForwardBaseUrl] = useState('');
   const pullUrl = `${origin}/api/nodes/pull`;
   const ackUrl = `${origin}/api/nodes/ack`;
-  const skillYaml = buildSkillYaml(origin, token);
+  const skillYaml = buildSkillYaml(origin, token, forwardBaseUrl || undefined);
 
   return (
     <>
       <h3 className="text-lg font-semibold">Connect your OpenClaw node</h3>
       <p className="text-muted-foreground mt-1 text-sm">
-        Configure your private OpenClaw instance to pull events from clawproxy using the endpoints
-        and skill configuration below.
+        Install this skill on your OpenClaw node. The skill will poll clawproxy for events,
+        forward each one to your local OpenClaw webhook system, then acknowledge delivery.
       </p>
 
       <div className="mt-5 space-y-4">
@@ -98,6 +99,25 @@ function ConnectGuide({ origin, token, copiedField, onCopy, onClose }: ConnectGu
         </div>
 
         <div>
+          <Label htmlFor="openclaw-url" className="mb-1.5 text-xs font-medium">
+            OpenClaw base URL{' '}
+            <span className="text-muted-foreground font-normal">(optional)</span>
+          </Label>
+          <Input
+            id="openclaw-url"
+            className="mt-1.5 font-mono text-xs"
+            placeholder="http://openclaw-host:8080"
+            value={forwardBaseUrl}
+            onChange={(e) => setForwardBaseUrl(e.target.value)}
+          />
+          <p className="text-muted-foreground mt-1 text-xs">
+            The base URL of your OpenClaw instance. Used to fill in the{' '}
+            <code className="bg-muted rounded px-1 py-0.5">forward.webhook_url</code> in the skill
+            configuration below.
+          </p>
+        </div>
+
+        <div>
           <div className="mb-1.5 flex items-center justify-between">
             <p className="text-xs font-medium">OpenClaw skill configuration</p>
             <Button
@@ -121,10 +141,12 @@ function ConnectGuide({ origin, token, copiedField, onCopy, onClose }: ConnectGu
       </div>
 
       <p className="text-muted-foreground mt-4 text-xs">
-        Your OpenClaw node should{' '}
-        <code className="bg-muted rounded px-1 py-0.5">POST</code> to the pull endpoint with{' '}
+        The skill polls the pull endpoint with{' '}
         <code className="bg-muted rounded px-1 py-0.5">Authorization: Bearer &lt;token&gt;</code>,
-        process each event, then acknowledge by posting the event IDs to the ack endpoint.
+        replays each event&apos;s original headers and body to your OpenClaw webhook system using
+        the <code className="bg-muted rounded px-1 py-0.5">forward.webhook_url</code> (replacing{' '}
+        <code className="bg-muted rounded px-1 py-0.5">{'{routeSlug}'}</code> with the event&apos;s
+        route slug), then acknowledges delivery by posting the event IDs to the ack endpoint.
       </p>
 
       <Button className="mt-4 w-full" onClick={onClose}>
