@@ -2,26 +2,16 @@
 
 import { useState } from 'react';
 
+import { formatRelativeTime } from '@/app/lib/dashboard/datetime';
+import {
+  buildSkillYaml,
+  getNodeHealth,
+  type NodeHealth,
+} from '@/app/lib/dashboard/node-connect';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
-
-function buildSkillYaml(origin: string, token?: string): string {
-  const tokenValue = token ?? 'YOUR_NODE_TOKEN_HERE';
-  return `name: clawproxy-relay
-version: "1.0"
-description: Pulls and delivers webhook events from clawproxy
-
-connection:
-  pull_url: "${origin}/api/nodes/pull"
-  ack_url: "${origin}/api/nodes/ack"
-  token: "${tokenValue}"
-
-polling:
-  interval_seconds: 30
-  max_events: 10`;
-}
 
 type NodeRow = {
   id: string;
@@ -31,16 +21,6 @@ type NodeRow = {
   lastSeenAt: Date | string | null;
   createdAt: Date | string;
 };
-
-type NodeHealth = 'active' | 'stale' | 'offline';
-
-function getNodeHealth(lastSeenAt: Date | string | null): NodeHealth {
-  if (!lastSeenAt) return 'offline';
-  const ms = Date.now() - new Date(lastSeenAt).getTime();
-  if (ms < 5 * 60 * 1000) return 'active';
-  if (ms < 60 * 60 * 1000) return 'stale';
-  return 'offline';
-}
 
 function HealthBadge({ health }: { health: NodeHealth }) {
   const styles: Record<NodeHealth, string> = {
@@ -66,19 +46,6 @@ function HealthBadge({ health }: { health: NodeHealth }) {
       {health}
     </span>
   );
-}
-
-function formatRelativeTime(date: Date | string | null): string {
-  if (!date) return 'Never';
-  const ms = Date.now() - new Date(date).getTime();
-  const seconds = Math.floor(ms / 1000);
-  if (seconds < 60) return 'Just now';
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
 }
 
 type Props = {
@@ -390,7 +357,7 @@ export function NodesClient({ initialNodes }: Props) {
                       <HealthBadge health={health} />
                     </td>
                     <td className="text-muted-foreground px-5 py-3">
-                      {formatRelativeTime(node.lastSeenAt)}
+                      {formatRelativeTime(node.lastSeenAt, { absentLabel: 'Never' })}
                     </td>
                     <td className="px-5 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
