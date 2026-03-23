@@ -1,16 +1,14 @@
 import { and, eq } from 'drizzle-orm';
-import { NextResponse } from 'next/server';
 
-import { requireAdminUser } from '@/app/lib/auth/require-admin';
 import { db } from '@/app/lib/db/client';
+import { jsonError, jsonOk, withAdminUser } from '@/app/lib/http/admin-json';
 import { events, nodes } from '@/db/schema';
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  try {
-    const user = await requireAdminUser();
+  return withAdminUser(async (user) => {
     const { id } = await params;
 
     const result = await db
@@ -37,11 +35,9 @@ export async function GET(
       .limit(1);
 
     if (result.length === 0) {
-      return NextResponse.json({ ok: false, error: 'Event not found' }, { status: 404 });
+      return jsonError('Event not found', 404);
     }
 
-    return NextResponse.json({ ok: true, event: result[0] });
-  } catch {
-    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
-  }
+    return jsonOk({ event: result[0] });
+  });
 }

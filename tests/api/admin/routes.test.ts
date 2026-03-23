@@ -1,5 +1,8 @@
 import { describe, expect, test, vi } from 'vitest';
 
+import { UnauthorizedError } from '@/app/lib/auth/unauthorized-error';
+import { mockAdminUser as mockUser } from '../../helpers/admin-api-mocks';
+
 const mockRequireAdminUser = vi.hoisted(() => vi.fn());
 
 const { mockDb, mockDbOrderBy, mockDbInsertReturning } = vi.hoisted(() => {
@@ -38,8 +41,6 @@ vi.mock('@/app/lib/db/client', () => ({ db: mockDb }));
 
 import { GET, POST } from '@/app/api/admin/routes/route';
 
-const mockUser = { id: 'user-1', email: 'admin@example.com' };
-
 const mockRoute = {
   id: 'route-uuid-1',
   nodeId: 'node-uuid-1',
@@ -51,7 +52,7 @@ const mockRoute = {
 
 describe('GET /api/admin/routes', () => {
   test('returns 401 when user is not authenticated', async () => {
-    mockRequireAdminUser.mockRejectedValue(new Error('Unauthorized'));
+    mockRequireAdminUser.mockRejectedValue(new UnauthorizedError());
 
     const response = await GET();
     const body = await response.json();
@@ -84,7 +85,7 @@ describe('POST /api/admin/routes', () => {
   }
 
   test('returns 401 when user is not authenticated', async () => {
-    mockRequireAdminUser.mockRejectedValue(new Error('Unauthorized'));
+    mockRequireAdminUser.mockRejectedValue(new UnauthorizedError());
 
     const response = await POST(makeRequest({ nodeId: 'n', slug: 'my-webhook' }));
     const body = await response.json();

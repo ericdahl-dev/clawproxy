@@ -1,5 +1,8 @@
 import { describe, expect, test, vi } from 'vitest';
 
+import { UnauthorizedError } from '@/app/lib/auth/unauthorized-error';
+import { mockAdminUser as mockUser } from '../../../helpers/admin-api-mocks';
+
 const mockRequireAdminUser = vi.hoisted(() => vi.fn());
 
 const { mockDb, mockDbLimit } = vi.hoisted(() => {
@@ -22,8 +25,6 @@ vi.mock('@/app/lib/auth/require-admin', () => ({
 vi.mock('@/app/lib/db/client', () => ({ db: mockDb }));
 
 import { GET } from '@/app/api/admin/events/[id]/route';
-
-const mockUser = { id: 'user-1', email: 'admin@example.com' };
 
 const mockEvent = {
   id: 'event-uuid-1',
@@ -49,7 +50,7 @@ function makeContext(id: string) {
 
 describe('GET /api/admin/events/[id]', () => {
   test('returns 401 when user is not authenticated', async () => {
-    mockRequireAdminUser.mockRejectedValue(new Error('Unauthorized'));
+    mockRequireAdminUser.mockRejectedValue(new UnauthorizedError());
 
     const response = await GET(new Request('http://localhost'), makeContext('event-uuid-1'));
     const body = await response.json();

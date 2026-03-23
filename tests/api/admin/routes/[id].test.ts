@@ -1,5 +1,8 @@
 import { describe, expect, test, vi } from 'vitest';
 
+import { UnauthorizedError } from '@/app/lib/auth/unauthorized-error';
+import { mockAdminUser as mockUser } from '../../../helpers/admin-api-mocks';
+
 const mockRequireAdminUser = vi.hoisted(() => vi.fn());
 
 const { mockDb, mockDbDeleteReturning, mockDbUpdateReturning } = vi.hoisted(() => {
@@ -28,8 +31,6 @@ vi.mock('@/app/lib/db/client', () => ({ db: mockDb }));
 
 import { DELETE, PATCH } from '@/app/api/admin/routes/[id]/route';
 
-const mockUser = { id: 'user-1', email: 'admin@example.com' };
-
 function makeContext(id: string) {
   return { params: Promise.resolve({ id }) };
 }
@@ -48,7 +49,7 @@ function makePatchRequest(body: Record<string, unknown>) {
 
 describe('DELETE /api/admin/routes/[id]', () => {
   test('returns 401 when user is not authenticated', async () => {
-    mockRequireAdminUser.mockRejectedValue(new Error('Unauthorized'));
+    mockRequireAdminUser.mockRejectedValue(new UnauthorizedError());
 
     const response = await DELETE(makeDeleteRequest(), makeContext('route-uuid-1'));
     const body = await response.json();
@@ -79,11 +80,23 @@ describe('DELETE /api/admin/routes/[id]', () => {
     expect(response.status).toBe(200);
     expect(body.ok).toBe(true);
   });
+
+  test('returns 500 when delete fails unexpectedly', async () => {
+    mockRequireAdminUser.mockResolvedValue(mockUser);
+    mockDbDeleteReturning.mockRejectedValueOnce(new Error('db down'));
+
+    const response = await DELETE(makeDeleteRequest(), makeContext('route-uuid-1'));
+    const body = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(body.ok).toBe(false);
+    expect(body.error).toMatch(/something went wrong/i);
+  });
 });
 
 describe('PATCH /api/admin/routes/[id]', () => {
   test('returns 401 when user is not authenticated', async () => {
-    mockRequireAdminUser.mockRejectedValue(new Error('Unauthorized'));
+    mockRequireAdminUser.mockRejectedValue(new UnauthorizedError());
 
     const response = await PATCH(makePatchRequest({ enabled: false }), makeContext('route-uuid-1'));
     const body = await response.json();

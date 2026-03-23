@@ -1,16 +1,14 @@
 import { and, eq, inArray } from 'drizzle-orm';
-import { NextResponse } from 'next/server';
 
-import { requireAdminUser } from '@/app/lib/auth/require-admin';
 import { db } from '@/app/lib/db/client';
+import { jsonError, jsonOk, withAdminUser } from '@/app/lib/http/admin-json';
 import { events } from '@/db/schema';
 
 export async function POST(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  try {
-    const user = await requireAdminUser();
+  return withAdminUser(async (user) => {
     const { id } = await params;
 
     const updated = await db
@@ -30,14 +28,9 @@ export async function POST(
       .returning({ id: events.id });
 
     if (updated.length === 0) {
-      return NextResponse.json(
-        { ok: false, error: 'Event not found or not retryable' },
-        { status: 404 },
-      );
+      return jsonError('Event not found or not retryable', 404);
     }
 
-    return NextResponse.json({ ok: true });
-  } catch {
-    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
-  }
+    return jsonOk({});
+  });
 }

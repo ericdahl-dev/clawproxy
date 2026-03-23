@@ -1,8 +1,7 @@
 import { and, desc, eq } from 'drizzle-orm';
-import { NextResponse } from 'next/server';
 
-import { requireAdminUser } from '@/app/lib/auth/require-admin';
 import { db } from '@/app/lib/db/client';
+import { jsonError, jsonOk, withAdminUser } from '@/app/lib/http/admin-json';
 import { nodes, routes } from '@/db/schema';
 
 function slugifyRouteSlug(value: string) {
@@ -14,8 +13,7 @@ function slugifyRouteSlug(value: string) {
 }
 
 export async function GET() {
-  try {
-    const user = await requireAdminUser();
+  return withAdminUser(async (user) => {
     const userId = user.id;
 
     const result = await db
@@ -33,25 +31,24 @@ export async function GET() {
       .where(eq(routes.userId, userId))
       .orderBy(desc(routes.createdAt));
 
-    return NextResponse.json({ ok: true, routes: result });
-  } catch {
-    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
-  }
+    return jsonOk({ routes: result });
+  });
 }
 
 export async function POST(request: Request) {
-  try {
-    const user = await requireAdminUser();
+  return withAdminUser(async (user) => {
     const userId = user.id;
-    const body = (await request.json()) as { nodeId?: string; slug?: string };
+    let body: { nodeId?: string; slug?: string };
+    try {
+      body = (await request.json()) as { nodeId?: string; slug?: string };
+    } catch {
+      return jsonError('Invalid JSON body', 400);
+    }
     const nodeId = body.nodeId?.trim();
     const slug = body.slug ? slugifyRouteSlug(body.slug) : '';
 
     if (!nodeId || !slug) {
-      return NextResponse.json(
-        { ok: false, error: 'nodeId and slug are required' },
-        { status: 400 }
-      );
+      return jsonError('nodeId and slug are required', 400);
     }
 
     const ownedNode = await db
@@ -61,7 +58,7 @@ export async function POST(request: Request) {
       .limit(1);
 
     if (!ownedNode[0]) {
-      return NextResponse.json({ ok: false, error: 'Node not found' }, { status: 404 });
+      return jsonError('Node not found', 404);
     }
 
     const inserted = await db
@@ -79,8 +76,6 @@ export async function POST(request: Request) {
         createdAt: routes.createdAt,
       });
 
-    return NextResponse.json({ ok: true, route: inserted[0] });
-  } catch {
-    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
-  }
+    return jsonOk({ route: inserted[0] });
+  });
 }

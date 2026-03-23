@@ -1,16 +1,13 @@
 import { count, eq } from 'drizzle-orm';
-import { NextResponse } from 'next/server';
 
-import { requireAdminUser } from '@/app/lib/auth/require-admin';
 import { db } from '@/app/lib/db/client';
+import { jsonOk, withAdminUser } from '@/app/lib/http/admin-json';
 import { events } from '@/db/schema';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  try {
-    const user = await requireAdminUser();
-
+  return withAdminUser(async (user) => {
     const countsByStatus = await db
       .select({
         status: events.status,
@@ -29,8 +26,7 @@ export async function GET() {
     const delivered = totals.delivered ?? 0;
     const successRate = total > 0 ? Math.round((delivered / total) * 100) : 0;
 
-    return NextResponse.json({
-      ok: true,
+    return jsonOk({
       metrics: {
         total,
         byStatus: {
@@ -43,7 +39,5 @@ export async function GET() {
         successRate,
       },
     });
-  } catch {
-    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
-  }
+  });
 }

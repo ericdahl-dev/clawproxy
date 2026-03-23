@@ -5,6 +5,7 @@ import { count, eq } from 'drizzle-orm';
 import { requireAdminUser } from '@/app/lib/auth/require-admin';
 import { db } from '@/app/lib/db/client';
 import { events } from '@/db/schema';
+import { DashboardPageHeader } from '@/components/app/dashboard-page-header';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,16 +54,11 @@ export default async function DashboardPage() {
 
   return (
     <section className="space-y-6">
-      <div>
-        <p className="text-brand-accent text-sm font-semibold tracking-[0.32em] uppercase">
-          Overview
-        </p>
-        <h2 className="mt-3 text-3xl font-semibold">Welcome back</h2>
-        <p className="text-muted-foreground mt-3 max-w-2xl text-base leading-7">
-          Use the dashboard navigation to manage nodes, routes, and events for your public ingress
-          and private delivery pipeline.
-        </p>
-      </div>
+      <DashboardPageHeader
+        eyebrow="Overview"
+        title="Welcome back"
+        description="Use the dashboard navigation to manage nodes, routes, and events for your public ingress and private delivery pipeline."
+      />
 
       <div>
         <p className="mb-3 text-sm font-medium">Event summary</p>
