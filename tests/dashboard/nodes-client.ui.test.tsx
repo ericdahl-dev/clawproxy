@@ -42,6 +42,7 @@ describe('NodesClient', () => {
         name: 'Worker',
         slug: 'worker',
         status: 'active' as const,
+        wsConnected: false,
         lastSeenAt: null,
         createdAt: '2025-01-01T00:00:00.000Z',
       },
@@ -85,6 +86,7 @@ describe('NodesClient', () => {
         name: 'Worker',
         slug: 'worker',
         status: 'active' as const,
+        wsConnected: false,
         lastSeenAt: null,
         createdAt: '2025-01-01T00:00:00.000Z',
       },
@@ -114,6 +116,37 @@ describe('NodesClient', () => {
     expect(modalPanel?.className).toContain('overflow-y-auto');
   });
 
+  test('renders WS column with connected and disconnected states', async () => {
+    const initialNodes = [
+      {
+        id: 'node-1',
+        name: 'Worker A',
+        slug: 'worker-a',
+        status: 'active' as const,
+        wsConnected: true,
+        lastSeenAt: null,
+        createdAt: '2025-01-01T00:00:00.000Z',
+      },
+      {
+        id: 'node-2',
+        name: 'Worker B',
+        slug: 'worker-b',
+        status: 'active' as const,
+        wsConnected: false,
+        lastSeenAt: null,
+        createdAt: '2025-01-01T00:00:00.000Z',
+      },
+    ];
+
+    await act(async () => {
+      root.render(createElement(NodesClient, { initialNodes }));
+    });
+
+    expect(container.textContent).toContain('WS');
+    expect(container.textContent).toContain('connected');
+    expect(container.textContent).toContain('disconnected');
+  });
+
   test('closes connect modal on Escape', async () => {
     const initialNodes = [
       {
@@ -121,6 +154,7 @@ describe('NodesClient', () => {
         name: 'Worker',
         slug: 'worker',
         status: 'active' as const,
+        wsConnected: false,
         lastSeenAt: null,
         createdAt: '2025-01-01T00:00:00.000Z',
       },
@@ -155,6 +189,7 @@ describe('NodesClient', () => {
         name: 'Worker',
         slug: 'worker',
         status: 'active' as const,
+        wsConnected: false,
         lastSeenAt: null,
         createdAt: '2025-01-01T00:00:00.000Z',
       },
@@ -192,6 +227,7 @@ describe('NodesClient', () => {
         name: 'Worker',
         slug: 'worker',
         status: 'active' as const,
+        wsConnected: false,
         lastSeenAt: null,
         createdAt: '2025-01-01T00:00:00.000Z',
       },
@@ -240,6 +276,10 @@ describe('NodesClient', () => {
     const modalInput = document.body.querySelector('#openclaw-url') as HTMLInputElement | null;
     expect(modalInput).toBeTruthy();
     expect(modalInput?.value).toBe('http://openclaw-host:8080');
+    expect(document.body.textContent).toContain('One-paste OpenClaw setup block');
+    expect(document.body.textContent).toContain(
+      'After successful forward, send websocket ack using connection.websocket.ack_message_template',
+    );
   });
 
   test('defaults OpenClaw base URL to localhost for new users', async () => {
@@ -251,6 +291,7 @@ describe('NodesClient', () => {
         name: 'Worker',
         slug: 'worker',
         status: 'active' as const,
+        wsConnected: false,
         lastSeenAt: null,
         createdAt: '2025-01-01T00:00:00.000Z',
       },

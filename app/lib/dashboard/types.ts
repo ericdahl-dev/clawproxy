@@ -37,6 +37,7 @@ export type NodeRow = {
   name: string;
   slug: string;
   status: 'active' | 'disabled';
+  wsConnected: boolean;
   lastSeenAt: Date | string | null;
   createdAt: Date | string;
 };
