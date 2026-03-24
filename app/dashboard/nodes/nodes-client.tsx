@@ -219,7 +219,7 @@ function ConnectGuide({
           <Input
             id="openclaw-url"
             className="mt-1.5 font-mono text-xs"
-            placeholder="http://openclaw-host:8080"
+            placeholder="http://127.0.0.1:18789"
             value={forwardBaseUrl}
             onChange={(e) => setForwardBaseUrl(e.target.value)}
           />
@@ -271,7 +271,7 @@ function ConnectGuide({
 }
 
 export function NodesClient({ initialNodes }: Props) {
-  const DEFAULT_OPENCLAW_BASE_URL = 'http://localhost:8080';
+  const DEFAULT_OPENCLAW_BASE_URL = 'http://127.0.0.1:18789';
   const OPENCLAW_URL_STORAGE_KEY = 'nodes.openclawBaseUrl';
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const [nodeList, setNodeList] = useState<NodeRow[]>(initialNodes);
@@ -438,7 +438,7 @@ export function NodesClient({ initialNodes }: Props) {
               <Label htmlFor="openclaw-base-url">OpenClaw base URL</Label>
               <Input
                 id="openclaw-base-url"
-                placeholder="http://openclaw-host:8080"
+                placeholder="http://127.0.0.1:18789"
                 value={openClawInput}
                 onChange={(e) => setOpenClawInput(e.target.value)}
               />

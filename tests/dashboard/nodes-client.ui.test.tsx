@@ -303,6 +303,6 @@ describe('NodesClient', () => {
 
     const urlInput = container.querySelector('#openclaw-base-url') as HTMLInputElement | null;
     expect(urlInput).toBeTruthy();
-    expect(urlInput?.value).toBe('http://localhost:8080');
+    expect(urlInput?.value).toBe('http://127.0.0.1:18789');
   });
 });
