@@ -1,10 +1,13 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 import { db } from '@/app/lib/db/client';
 import { getDefaultEventExpiryDate } from '@/app/lib/events/expires-at';
 import { headersToObject } from '@/app/lib/http/headers';
+import { isConnected, pushEventToNode } from '@/app/lib/ws/connection-manager';
 import { events, routes } from '@/db/schema';
+
+const LEASE_DURATION_MS = 60_000;
 
 export async function POST(
   request: Request,
@@ -51,6 +54,35 @@ export async function POST(
 
   const event = insertedEvents[0];
 
+  if (isConnected(route.nodeId)) {
+    const leaseExpiresAt = new Date(Date.now() + LEASE_DURATION_MS);
+    const [leasedEvent] = await db
+      .update(events)
+      .set({
+        status: 'leased',
+        attemptCount: sql`${events.attemptCount} + 1`,
+        leaseExpiresAt,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(events.id, event.id), eq(events.status, 'pending')))
+      .returning();
+
+    if (leasedEvent) {
+      pushEventToNode(route.nodeId, {
+        type: 'event',
+        id: leasedEvent.id,
+        routeId: leasedEvent.routeId,
+        routeSlug,
+        headers: leasedEvent.headersJson as Record<string, string>,
+        body: leasedEvent.bodyText ?? '',
+        contentType: leasedEvent.contentType,
+        receivedAt: leasedEvent.receivedAt?.toISOString() ?? '',
+        leaseExpiresAt: leasedEvent.leaseExpiresAt?.toISOString() ?? '',
+        attemptCount: leasedEvent.attemptCount ?? 1,
+      });
+    }
+  }
+
   return NextResponse.json(
     {
       ok: true,
@@ -60,3 +92,4 @@ export async function POST(
     { status: 202 }
   );
 }
+

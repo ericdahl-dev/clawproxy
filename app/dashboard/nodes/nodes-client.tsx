@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { formatRelativeTime } from '@/app/lib/dashboard/datetime';
 import {
@@ -11,6 +12,13 @@ import {
 import { adminJson } from '@/app/lib/dashboard/admin-fetch';
 import type { NodeRow } from '@/app/lib/dashboard/types';
 import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/app/lib/utils';
@@ -45,16 +53,74 @@ type Props = {
   initialNodes: NodeRow[];
 };
 
+const modalBackdropClass =
+  'fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm sm:items-center';
+const modalPanelClass =
+  'border-border/80 bg-card w-full rounded-2xl border p-6 shadow-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto';
+
+function Modal({
+  children,
+  maxWidthClass,
+  onClose,
+}: {
+  children: React.ReactNode;
+  maxWidthClass: string;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    }
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [onClose]);
+
+  return createPortal(
+    <div
+      className={modalBackdropClass}
+      data-testid="modal-backdrop"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div
+        className={`${modalPanelClass} ${maxWidthClass}`}
+        role="dialog"
+        aria-modal="true"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        {children}
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 type ConnectGuideProps = {
   origin: string;
   token?: string;
+  initialForwardBaseUrl?: string;
   copiedField: string | null;
   onCopy: (text: string, field: string) => void;
   onClose: () => void;
 };
 
-function ConnectGuide({ origin, token, copiedField, onCopy, onClose }: ConnectGuideProps) {
-  const [forwardBaseUrl, setForwardBaseUrl] = useState('');
+function ConnectGuide({
+  origin,
+  token,
+  initialForwardBaseUrl,
+  copiedField,
+  onCopy,
+  onClose,
+}: ConnectGuideProps) {
+  const [forwardBaseUrl, setForwardBaseUrl] = useState(initialForwardBaseUrl ?? '');
+  const wsOrigin = origin.replace(/^http/, 'ws');
+  const wsUrl = `${wsOrigin}/api/nodes/ws`;
   const pullUrl = `${origin}/api/nodes/pull`;
   const ackUrl = `${origin}/api/nodes/ack`;
   const skillYaml = buildSkillYaml(origin, token, forwardBaseUrl || undefined);
@@ -63,13 +129,44 @@ function ConnectGuide({ origin, token, copiedField, onCopy, onClose }: ConnectGu
     <>
       <h3 className="text-lg font-semibold">Connect your OpenClaw node</h3>
       <p className="text-muted-foreground mt-1 text-sm">
-        Install this skill on your OpenClaw node. The skill will poll clawproxy for events,
-        forward each one to your local OpenClaw webhook system, then acknowledge delivery.
+        Install this skill on your OpenClaw node. The skill will connect to clawproxy via WebSocket
+        for real-time event delivery, falling back to HTTP polling when needed.
       </p>
 
       <div className="mt-5 space-y-4">
         <div>
-          <p className="mb-1.5 text-xs font-medium">Pull endpoint</p>
+          <p className="mb-1.5 text-xs font-medium">
+            WebSocket endpoint{' '}
+            <span className="text-emerald-400 font-normal">— recommended (live push)</span>
+          </p>
+          <div className="border-border/60 bg-background/60 flex items-center gap-2 rounded-lg border px-3 py-2">
+            <code className="flex-1 overflow-x-auto text-xs">{wsUrl}</code>
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={() => onCopy(wsUrl, 'ws')}
+              className="shrink-0"
+            >
+              {copiedField === 'ws' ? 'Copied!' : 'Copy'}
+            </Button>
+          </div>
+          <p className="text-muted-foreground mt-1 text-xs">
+            Events are pushed to the node the moment they arrive. Authenticate after connecting by
+            sending{' '}
+            <code className="bg-muted rounded px-1 py-0.5">
+              {'{'}
+              &quot;type&quot;:&quot;auth&quot;,&quot;token&quot;:&quot;cpn_…&quot;
+              {'}'}
+            </code>
+            .
+          </p>
+        </div>
+
+        <div>
+          <p className="mb-1.5 text-xs font-medium">
+            Pull endpoint{' '}
+            <span className="text-muted-foreground font-normal">— HTTP polling fallback</span>
+          </p>
           <div className="border-border/60 bg-background/60 flex items-center gap-2 rounded-lg border px-3 py-2">
             <code className="flex-1 overflow-x-auto text-xs">{pullUrl}</code>
             <Button
@@ -141,12 +238,13 @@ function ConnectGuide({ origin, token, copiedField, onCopy, onClose }: ConnectGu
       </div>
 
       <p className="text-muted-foreground mt-4 text-xs">
-        The skill polls the pull endpoint with{' '}
-        <code className="bg-muted rounded px-1 py-0.5">Authorization: Bearer &lt;token&gt;</code>,
-        replays each event&apos;s original headers and body to your OpenClaw webhook system using
-        the <code className="bg-muted rounded px-1 py-0.5">forward.webhook_url</code> (replacing{' '}
-        <code className="bg-muted rounded px-1 py-0.5">{'{routeSlug}'}</code> with the event&apos;s
-        route slug), then acknowledges delivery by posting the event IDs to the ack endpoint.
+        The skill connects via WebSocket and receives events in real-time. Alternatively, it polls
+        the pull endpoint with{' '}
+        <code className="bg-muted rounded px-1 py-0.5">Authorization: Bearer &lt;token&gt;</code>.
+        Each event&apos;s original headers and body are forwarded to your OpenClaw webhook system
+        using the <code className="bg-muted rounded px-1 py-0.5">forward.webhook_url</code>{' '}
+        (replacing <code className="bg-muted rounded px-1 py-0.5">{'{routeSlug}'}</code> with the
+        event&apos;s route slug), then delivery is acknowledged via the ack endpoint.
       </p>
 
       <Button className="mt-4 w-full" onClick={onClose}>
@@ -157,8 +255,12 @@ function ConnectGuide({ origin, token, copiedField, onCopy, onClose }: ConnectGu
 }
 
 export function NodesClient({ initialNodes }: Props) {
+  const DEFAULT_OPENCLAW_BASE_URL = 'http://localhost:8080';
+  const OPENCLAW_URL_STORAGE_KEY = 'nodes.openclawBaseUrl';
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const [nodeList, setNodeList] = useState<NodeRow[]>(initialNodes);
+  const [openClawBaseUrl, setOpenClawBaseUrl] = useState(DEFAULT_OPENCLAW_BASE_URL);
+  const [openClawInput, setOpenClawInput] = useState(DEFAULT_OPENCLAW_BASE_URL);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [nameInput, setNameInput] = useState('');
   const [slugInput, setSlugInput] = useState('');
@@ -279,6 +381,21 @@ export function NodesClient({ initialNodes }: Props) {
     setTimeout(() => setCopiedField(null), 2000);
   }
 
+  useEffect(() => {
+    const savedUrl = window.localStorage.getItem(OPENCLAW_URL_STORAGE_KEY);
+    if (!savedUrl) {
+      return;
+    }
+    setOpenClawBaseUrl(savedUrl);
+    setOpenClawInput(savedUrl);
+  }, [OPENCLAW_URL_STORAGE_KEY]);
+
+  function handleSaveOpenClawBaseUrl() {
+    const normalized = openClawInput.trim();
+    window.localStorage.setItem(OPENCLAW_URL_STORAGE_KEY, normalized);
+    setOpenClawBaseUrl(normalized);
+  }
+
   return (
     <>
       <div className="flex items-center justify-between">
@@ -289,6 +406,34 @@ export function NodesClient({ initialNodes }: Props) {
           </Button>
         )}
       </div>
+
+      <Card size="sm" className="border-border/70 bg-background/40 ring-0">
+        <CardHeader>
+          <CardTitle>Connect your OpenClaw instance</CardTitle>
+          <CardDescription>
+            Save your OpenClaw base URL once and reuse it in node connect instructions.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+            <div className="flex-1 space-y-1.5">
+              <Label htmlFor="openclaw-base-url">OpenClaw base URL</Label>
+              <Input
+                id="openclaw-base-url"
+                placeholder="http://openclaw-host:8080"
+                value={openClawInput}
+                onChange={(e) => setOpenClawInput(e.target.value)}
+              />
+            </div>
+            <Button size="sm" type="button" onClick={handleSaveOpenClawBaseUrl}>
+              Save URL
+            </Button>
+          </div>
+          {openClawBaseUrl && (
+            <p className="text-muted-foreground mt-2 text-xs">Saved: {openClawBaseUrl}</p>
+          )}
+        </CardContent>
+      </Card>
 
       {showCreateForm && (
         <div className="border-border/70 bg-background/40 rounded-2xl border p-5">
@@ -404,8 +549,7 @@ export function NodesClient({ initialNodes }: Props) {
       )}
 
       {createdToken && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="border-border/80 bg-card w-full max-w-lg rounded-2xl border p-6 shadow-2xl">
+        <Modal maxWidthClass="max-w-lg" onClose={() => setCreatedToken(null)}>
             {tokenModalStep === 1 ? (
               <>
                 <h3 className="text-lg font-semibold">Node created</h3>
@@ -436,31 +580,29 @@ export function NodesClient({ initialNodes }: Props) {
               <ConnectGuide
                 origin={origin}
                 token={createdToken}
+                initialForwardBaseUrl={openClawBaseUrl}
                 copiedField={copiedField}
                 onCopy={handleCopy}
                 onClose={() => setCreatedToken(null)}
               />
             )}
-          </div>
-        </div>
+        </Modal>
       )}
 
       {connectNode && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="border-border/80 bg-card w-full max-w-lg rounded-2xl border p-6 shadow-2xl">
-            <ConnectGuide
-              origin={origin}
-              copiedField={copiedField}
-              onCopy={handleCopy}
-              onClose={() => setConnectNode(null)}
-            />
-          </div>
-        </div>
+        <Modal maxWidthClass="max-w-lg" onClose={() => setConnectNode(null)}>
+          <ConnectGuide
+            origin={origin}
+            initialForwardBaseUrl={openClawBaseUrl}
+            copiedField={copiedField}
+            onCopy={handleCopy}
+            onClose={() => setConnectNode(null)}
+          />
+        </Modal>
       )}
 
       {nodeToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="border-border/80 bg-card w-full max-w-sm rounded-2xl border p-6 shadow-2xl">
+        <Modal maxWidthClass="max-w-sm" onClose={() => setNodeToDelete(null)}>
             <h3 className="text-lg font-semibold">Delete node?</h3>
             <p className="text-muted-foreground mt-2 text-sm">
               This will permanently delete{' '}
@@ -486,13 +628,11 @@ export function NodesClient({ initialNodes }: Props) {
                 Cancel
               </Button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {nodeToRegenerate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="border-border/80 bg-card w-full max-w-sm rounded-2xl border p-6 shadow-2xl">
+        <Modal maxWidthClass="max-w-sm" onClose={() => setNodeToRegenerate(null)}>
             <h3 className="text-lg font-semibold">Regenerate token?</h3>
             <p className="text-muted-foreground mt-2 text-sm">
               This will invalidate the current token for{' '}
@@ -517,13 +657,11 @@ export function NodesClient({ initialNodes }: Props) {
                 Cancel
               </Button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {regeneratedToken && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="border-border/80 bg-card w-full max-w-lg rounded-2xl border p-6 shadow-2xl">
+        <Modal maxWidthClass="max-w-lg" onClose={() => setRegeneratedToken(null)}>
             <h3 className="text-lg font-semibold">New token generated</h3>
             <p className="text-muted-foreground mt-1 text-sm">
               Copy your new bearer token now — it won&apos;t be shown again.
@@ -545,8 +683,7 @@ export function NodesClient({ initialNodes }: Props) {
             <Button className="mt-4 w-full" onClick={() => setRegeneratedToken(null)}>
               Done
             </Button>
-          </div>
-        </div>
+        </Modal>
       )}
     </>
   );

@@ -20,9 +20,9 @@ const featureCards = [
       'clawproxy is designed for deployments behind NAT, residential routers, and private LANs that can only make outbound connections.',
   },
   {
-    title: 'Pull-based by design',
+    title: 'Live WebSocket delivery',
     description:
-      'Your OpenClaw node authenticates, fetches queued events, processes them locally, and acknowledges success on its own schedule.',
+      'OpenClaw nodes can open a persistent WebSocket connection and receive events the instant they arrive — no polling delay. HTTP pull is always available as a fallback.',
   },
   {
     title: 'Built for operators',
@@ -43,9 +43,9 @@ const steps = [
       'Each request is validated, accepted, and stored durably before your private node ever touches it.',
   },
   {
-    title: 'Deliver over outbound pull',
+    title: 'Deliver in real-time or on demand',
     description:
-      'Your OpenClaw node polls securely, processes events locally, and acknowledges delivery when complete.',
+      'Your OpenClaw node receives events instantly over a persistent WebSocket connection, or falls back to authenticated HTTP polling — whichever fits your setup.',
   },
 ];
 
@@ -106,8 +106,8 @@ export default function Home() {
 
             <p className="text-muted-foreground mt-6 max-w-2xl text-lg leading-8 sm:text-xl">
               Accept webhook traffic from the public internet, store it durably,
-              and deliver it to your OpenClaw node over authenticated outbound
-              pull. No public node exposure required.
+              and deliver it to your OpenClaw node instantly over WebSocket — or
+              via authenticated outbound pull. No public node exposure required.
             </p>
 
             <div className="mt-10 flex flex-wrap gap-4">
@@ -167,8 +167,8 @@ export default function Home() {
                       body: 'Request validated and persisted to the durable queue.',
                     },
                     {
-                      title: 'Node pull',
-                      body: 'Your private OpenClaw node fetches pending events securely.',
+                      title: 'Live push or pull',
+                      body: 'Event is pushed instantly over WebSocket, or fetched by the node on its next poll.',
                     },
                     {
                       title: 'Ack complete',
@@ -193,7 +193,7 @@ export default function Home() {
                 <div className="mt-5 grid gap-3 sm:grid-cols-3">
                   <div className="border-border bg-card/50 rounded-2xl border p-4">
                     <p className="text-muted-foreground text-xs tracking-[0.24em] uppercase">Mode</p>
-                    <p className="mt-2 text-lg font-semibold">Pull-based</p>
+                    <p className="mt-2 text-lg font-semibold">Push + Pull</p>
                   </div>
                   <div className="border-border bg-card/50 rounded-2xl border p-4">
                     <p className="text-muted-foreground text-xs tracking-[0.24em] uppercase">Storage</p>
