@@ -508,14 +508,15 @@ export function NodesClient({ initialNodes }: Props) {
         </div>
       ) : (
         <div className="border-border/70 bg-background/40 overflow-hidden rounded-2xl border">
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-border/50 border-b">
                 <th className="text-muted-foreground px-5 py-3 text-left font-medium">Name</th>
-                <th className="text-muted-foreground px-5 py-3 text-left font-medium">Slug</th>
+                <th className="text-muted-foreground hidden px-5 py-3 text-left font-medium sm:table-cell">Slug</th>
                 <th className="text-muted-foreground px-5 py-3 text-left font-medium">Health</th>
                 <th className="text-muted-foreground px-5 py-3 text-left font-medium">WS</th>
-                <th className="text-muted-foreground px-5 py-3 text-left font-medium">Last seen</th>
+                <th className="text-muted-foreground hidden px-5 py-3 text-left font-medium sm:table-cell">Last seen</th>
                 <th className="px-5 py-3" />
               </tr>
             </thead>
@@ -525,7 +526,7 @@ export function NodesClient({ initialNodes }: Props) {
                 return (
                   <tr key={node.id} className="border-border/30 border-b last:border-b-0">
                     <td className="px-5 py-3 font-medium">{node.name}</td>
-                    <td className="text-muted-foreground px-5 py-3 font-mono text-xs">
+                    <td className="text-muted-foreground hidden px-5 py-3 font-mono text-xs sm:table-cell">
                       {node.slug}
                     </td>
                     <td className="px-5 py-3">
@@ -534,7 +535,7 @@ export function NodesClient({ initialNodes }: Props) {
                     <td className="px-5 py-3">
                       <WsBadge connected={node.wsConnected} />
                     </td>
-                    <td className="text-muted-foreground px-5 py-3">
+                    <td className="text-muted-foreground hidden px-5 py-3 sm:table-cell">
                       {formatRelativeTime(node.lastSeenAt, { absentLabel: 'Never' })}
                     </td>
                     <td className="px-5 py-3 text-right">
@@ -567,6 +568,7 @@ export function NodesClient({ initialNodes }: Props) {
               })}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
