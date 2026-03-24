@@ -24,6 +24,11 @@ vi.mock('@/app/lib/auth/require-admin', () => ({
 
 vi.mock('@/app/lib/db/client', () => ({ db: mockDb }));
 
+vi.mock('@/app/lib/crypto/encryption', () => ({
+  encrypt: vi.fn((v: string) => `enc:${v}`),
+  decrypt: vi.fn((v: string) => v.replace(/^enc:/, '')),
+}));
+
 import { GET } from '@/app/api/admin/events/[id]/route';
 
 const mockEvent = {
@@ -32,8 +37,8 @@ const mockEvent = {
   nodeName: 'My Node',
   routeId: 'route-uuid-1',
   status: 'pending',
-  headersJson: { 'content-type': 'application/json' },
-  bodyText: '{"key":"value"}',
+  headersJson: 'enc:{"content-type":"application/json"}',
+  bodyText: 'enc:{"key":"value"}',
   contentType: 'application/json',
   receivedAt: new Date(),
   leaseExpiresAt: null,

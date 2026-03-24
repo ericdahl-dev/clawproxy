@@ -2,6 +2,7 @@ import { desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 import { generateNodeToken } from '@/app/lib/auth/node-tokens';
+import { decrypt, encrypt } from '@/app/lib/crypto/encryption';
 import { db } from '@/app/lib/db/client';
 import { jsonError, jsonOk, withAdminUser } from '@/app/lib/http/admin-json';
 import { nodes } from '@/db/schema';
@@ -43,7 +44,9 @@ export async function GET() {
       .where(eq(nodes.userId, userId))
       .orderBy(desc(nodes.createdAt));
 
-    return jsonOk({ nodes: result });
+    return jsonOk({
+      nodes: result.map((n) => ({ ...n, name: decrypt(n.name) })),
+    });
   });
 }
 
@@ -77,7 +80,7 @@ export async function POST(request: Request) {
         .insert(nodes)
         .values({
           userId,
-          name,
+          name: encrypt(name),
           slug,
           tokenHash,
         })
@@ -89,9 +92,10 @@ export async function POST(request: Request) {
           createdAt: nodes.createdAt,
         });
 
+      const node = inserted[0];
       return NextResponse.json({
         ok: true,
-        node: inserted[0],
+        node: { ...node, name: decrypt(node.name) },
         token,
       });
     } catch (error) {

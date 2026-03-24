@@ -3,6 +3,7 @@ import 'server-only';
 import { desc, eq } from 'drizzle-orm';
 
 import { requireAdminUser } from '@/app/lib/auth/require-admin';
+import { decrypt } from '@/app/lib/crypto/encryption';
 import { db } from '@/app/lib/db/client';
 import { nodes, routes } from '@/db/schema';
 import { DashboardPageHeader } from '@/components/app/dashboard-page-header';
@@ -32,7 +33,7 @@ export default async function DashboardRoutesPage() {
       .select({ id: nodes.id, name: nodes.name })
       .from(nodes)
       .where(eq(nodes.userId, user.id))
-      .orderBy(nodes.name),
+      .orderBy(desc(nodes.createdAt)),
   ]);
 
   return (
@@ -43,7 +44,13 @@ export default async function DashboardRoutesPage() {
         description="Define public ingress endpoints for providers that need to reach your private node."
       />
 
-      <RoutesClient initialRoutes={routeList} availableNodes={nodeList} />
+      <RoutesClient
+        initialRoutes={routeList.map((r) => ({
+          ...r,
+          nodeName: r.nodeName ? decrypt(r.nodeName) : null,
+        }))}
+        availableNodes={nodeList.map((n) => ({ ...n, name: decrypt(n.name) }))}
+      />
     </section>
   );
 }

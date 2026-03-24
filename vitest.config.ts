@@ -13,6 +13,9 @@ export default defineConfig({
     environment: 'node',
     globals: true,
     include: ['tests/**/*.test.ts', 'tests/**/*.test.tsx'],
+    env: {
+      ENCRYPTION_KEY: 'a'.repeat(64),
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'text-summary', 'html', 'json-summary'],

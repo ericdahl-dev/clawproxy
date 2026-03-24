@@ -1,5 +1,6 @@
 import { and, desc, eq } from 'drizzle-orm';
 
+import { decrypt } from '@/app/lib/crypto/encryption';
 import { db } from '@/app/lib/db/client';
 import { jsonError, jsonOk, withAdminUser } from '@/app/lib/http/admin-json';
 import { nodes, routes } from '@/db/schema';
@@ -31,7 +32,9 @@ export async function GET() {
       .where(eq(routes.userId, userId))
       .orderBy(desc(routes.createdAt));
 
-    return jsonOk({ routes: result });
+    return jsonOk({
+      routes: result.map((r) => ({ ...r, nodeName: r.nodeName ? decrypt(r.nodeName) : null })),
+    });
   });
 }
 

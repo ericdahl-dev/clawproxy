@@ -3,6 +3,7 @@ import 'server-only';
 import { desc, eq } from 'drizzle-orm';
 
 import { requireAdminUser } from '@/app/lib/auth/require-admin';
+import { decrypt } from '@/app/lib/crypto/encryption';
 import { db } from '@/app/lib/db/client';
 import { nodes } from '@/db/schema';
 import { DashboardPageHeader } from '@/components/app/dashboard-page-header';
@@ -35,7 +36,7 @@ export default async function DashboardNodesPage() {
         description="Register and monitor private OpenClaw nodes that pull events from the queue."
       />
 
-      <NodesClient initialNodes={nodeList} />
+      <NodesClient initialNodes={nodeList.map((n) => ({ ...n, name: decrypt(n.name) }))} />
     </section>
   );
 }

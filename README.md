@@ -83,8 +83,25 @@ Nodes connect to `wss://<your-clawproxy-host>/api/nodes/ws` and authenticate imm
 | `NEON_AUTH_BASE_URL` | Yes | Neon Auth base URL (server-side) |
 | `NEON_AUTH_COOKIE_SECRET` | Yes | Secret used to sign session cookies (min 32 chars) |
 | `NEXT_PUBLIC_NEON_AUTH_BASE_URL` | Yes | Neon Auth base URL (embedded in the client bundle at build time) |
+| `ENCRYPTION_KEY` | Yes | 64-character hex string (32 bytes) used for AES-256-GCM encryption of sensitive fields at rest. Generate with: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
 
 Copy `.env.example` (if present) to `.env.local` and fill in the values before running locally.
+
+### Encryption at rest
+
+The following fields are encrypted with AES-256-GCM before being written to the database and decrypted on read. The key is read from the `ENCRYPTION_KEY` environment variable.
+
+| Table | Column | Type | Description |
+|---|---|---|---|
+| `events` | `headers_json` | text (was jsonb) | Incoming HTTP request headers |
+| `events` | `body_text` | text | Raw webhook request body |
+| `nodes` | `name` | text | User-defined node display name |
+
+Ciphertext is stored as `v1:<iv_base64>:<authtag_base64>:<ciphertext_base64>`. Each value uses a unique random 12-byte IV, so identical plaintexts produce distinct ciphertexts.
+
+**Rotating the encryption key** requires re-encrypting all stored values. Decrypt each row with the old key and re-encrypt with the new key before updating `ENCRYPTION_KEY` in production.
+
+**Migrating existing unencrypted data** (if the table was populated before encryption was enabled): the `headers_json` column type was changed from `jsonb` to `text` in migration `0001`. Existing rows will contain plaintext JSON or `jsonb`-cast text. Re-encrypt them with the data migration script before serving live traffic.
 
 ### Local development
 

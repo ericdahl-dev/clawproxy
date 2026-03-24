@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { requireNodeFromRequest } from '@/app/lib/auth/require-node';
+import { decrypt } from '@/app/lib/crypto/encryption';
 import {
   clampMaxPullEvents,
   DEFAULT_LEASE_DURATION_SECONDS,
@@ -8,16 +9,20 @@ import {
 } from '@/app/lib/events/leases';
 import { sql } from '@/app/lib/db';
 
-type PullEventRow = {
+type RawPullEventRow = {
   id: string;
   routeId: string;
   routeSlug: string;
-  headers: Record<string, string>;
+  headers: string;
   body: string;
   contentType: string | null;
   receivedAt: string;
   leaseExpiresAt: string;
   attemptCount: number;
+};
+
+type PullEventRow = Omit<RawPullEventRow, 'headers'> & {
+  headers: Record<string, string>;
 };
 
 export async function POST(request: Request) {
@@ -40,7 +45,7 @@ export async function POST(request: Request) {
         AND expires_at <= now()
     `;
 
-    const events = await sql<PullEventRow[]>`
+    const rawEvents = await sql<RawPullEventRow[]>`
       WITH candidate_events AS (
         SELECT e.id
         FROM events e
@@ -77,6 +82,12 @@ export async function POST(request: Request) {
         e.lease_expires_at::text AS "leaseExpiresAt",
         e.attempt_count AS "attemptCount"
     `;
+
+    const events: PullEventRow[] = rawEvents.map((row) => ({
+      ...row,
+      headers: JSON.parse(decrypt(row.headers)) as Record<string, string>,
+      body: decrypt(row.body),
+    }));
 
     return NextResponse.json({
       ok: true,

@@ -34,6 +34,11 @@ vi.mock('@/app/lib/auth/require-admin', () => ({
 
 vi.mock('@/app/lib/db/client', () => ({ db: mockDb }));
 
+vi.mock('@/app/lib/crypto/encryption', () => ({
+  encrypt: vi.fn((v: string) => `enc:${v}`),
+  decrypt: vi.fn((v: string) => v.replace(/^enc:/, '')),
+}));
+
 import DashboardRoutesPage from '@/app/dashboard/routes/page';
 
 const mockUser = { id: 'user-1', email: 'admin@example.com' };

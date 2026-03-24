@@ -8,6 +8,13 @@
       "when": 1774123011028,
       "tag": "0000_mighty_clea",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1774322729406,
+      "tag": "0001_premium_tyrannus",
+      "breakpoints": true
     }
   ]
 }

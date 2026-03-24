@@ -29,6 +29,10 @@ vi.mock('@/app/lib/ws/connection-manager', () => ({
   isConnected: mockIsConnected,
   pushEventToNode: mockPushEventToNode,
 }));
+vi.mock('@/app/lib/crypto/encryption', () => ({
+  encrypt: vi.fn((v: string) => `enc:${v}`),
+  decrypt: vi.fn((v: string) => v.replace(/^enc:/, '')),
+}));
 
 import { POST } from '@/app/api/ingress/[routeSlug]/route';
 
@@ -109,8 +113,8 @@ describe('POST /api/ingress/[routeSlug]', () => {
     const leasedEvent = {
       id: 'event-ws-1',
       routeId: 'route-uuid-1',
-      headersJson: { 'x-custom': 'value' },
-      bodyText: '{"ws":true}',
+      headersJson: 'enc:{"x-custom":"value"}',
+      bodyText: 'enc:{"ws":true}',
       contentType: 'application/json',
       receivedAt: new Date('2024-01-01T00:00:00Z'),
       leaseExpiresAt: new Date('2024-01-01T00:01:00Z'),

@@ -9,6 +9,11 @@ vi.mock('@/app/lib/auth/require-node', () => ({
 
 vi.mock('@/app/lib/db', () => ({ sql: mockSql }));
 
+vi.mock('@/app/lib/crypto/encryption', () => ({
+  encrypt: vi.fn((v: string) => `enc:${v}`),
+  decrypt: vi.fn((v: string) => v.replace(/^enc:/, '')),
+}));
+
 import { POST } from '@/app/api/nodes/pull/route';
 
 const activeNode = {
@@ -80,8 +85,8 @@ describe('POST /api/nodes/pull', () => {
       id: 'event-uuid-1',
       routeId: 'route-uuid-1',
       routeSlug: 'my-webhook',
-      headers: { 'content-type': 'application/json' },
-      body: '{"key":"value"}',
+      headers: 'enc:{"content-type":"application/json"}',
+      body: 'enc:{"key":"value"}',
       contentType: 'application/json',
       receivedAt: new Date().toISOString(),
       leaseExpiresAt: new Date(Date.now() + 60_000).toISOString(),

@@ -3,6 +3,7 @@ import 'server-only';
 import { desc, eq } from 'drizzle-orm';
 
 import { requireAdminUser } from '@/app/lib/auth/require-admin';
+import { decrypt } from '@/app/lib/crypto/encryption';
 import { db } from '@/app/lib/db/client';
 import { events, nodes } from '@/db/schema';
 import { DashboardPageHeader } from '@/components/app/dashboard-page-header';
@@ -39,7 +40,7 @@ export default async function DashboardEventsPage() {
       .select({ id: nodes.id, name: nodes.name })
       .from(nodes)
       .where(eq(nodes.userId, user.id))
-      .orderBy(nodes.name),
+      .orderBy(desc(nodes.createdAt)),
   ]);
 
   return (
@@ -50,7 +51,13 @@ export default async function DashboardEventsPage() {
         description="Inspect queued webhook deliveries, acknowledgements, and failures."
       />
 
-      <EventsClient initialEvents={eventList} availableNodes={nodeList} />
+      <EventsClient
+        initialEvents={eventList.map((e) => ({
+          ...e,
+          nodeName: e.nodeName ? decrypt(e.nodeName) : null,
+        }))}
+        availableNodes={nodeList.map((n) => ({ ...n, name: decrypt(n.name) }))}
+      />
     </section>
   );
 }

@@ -2,7 +2,6 @@ import {
   boolean,
   index,
   integer,
-  jsonb,
   pgEnum,
   pgTable,
   text,
@@ -71,7 +70,7 @@ export const events = pgTable(
       .notNull()
       .references(() => routes.id, { onDelete: 'cascade' }),
     status: eventStatusEnum('status').notNull().default('pending'),
-    headersJson: jsonb('headers_json').notNull(),
+    headersJson: text('headers_json').notNull(),
     bodyText: text('body_text').notNull(),
     contentType: text('content_type'),
     receivedAt: timestamp('received_at', { withTimezone: true }).notNull().defaultNow(),
