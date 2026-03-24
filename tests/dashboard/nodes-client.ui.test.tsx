@@ -282,7 +282,7 @@ describe('NodesClient', () => {
     );
   });
 
-  test('defaults OpenClaw base URL to localhost for new users', async () => {
+  test('defaults OpenClaw base URL to local dev (127.0.0.1:18789) for new users', async () => {
     window.localStorage.removeItem('nodes.openclawBaseUrl');
 
     const initialNodes = [
@@ -303,6 +303,6 @@ describe('NodesClient', () => {
 
     const urlInput = container.querySelector('#openclaw-base-url') as HTMLInputElement | null;
     expect(urlInput).toBeTruthy();
-    expect(urlInput?.value).toBe('http://localhost:8080');
+    expect(urlInput?.value).toBe('http://127.0.0.1:18789');
   });
 });
