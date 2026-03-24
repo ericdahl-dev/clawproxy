@@ -73,7 +73,7 @@ jobs:
 # It's important you don't log the DATABASE_URL as output as it contains a username and
 # password for your database.
       - name: Run Migrations
-        run: yarn db:migrate
+        run: yarn db:push
         env:
           # to use pooled connection
           #DATABASE_URL: "${{ steps.create_neon_branch.outputs.db_url_pooled }}"
