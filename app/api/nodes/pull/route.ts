@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { requireNodeFromRequest } from '@/app/lib/auth/require-node';
+import { AuthError, requireNodeFromRequest } from '@/app/lib/auth/require-node';
 import { decrypt } from '@/app/lib/crypto/encryption';
 import {
   clampMaxPullEvents,
@@ -95,15 +95,11 @@ export async function POST(request: Request) {
       events,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unauthorized';
-
-    return NextResponse.json(
-      {
-        ok: false,
-        error: message,
-      },
-      { status: 401 }
-    );
+    if (error instanceof AuthError) {
+      return NextResponse.json({ ok: false, error: error.message }, { status: 401 });
+    }
+    console.error('[POST /api/nodes/pull]', error);
+    return NextResponse.json({ ok: false, error: 'Internal server error' }, { status: 500 });
   }
 }
 
