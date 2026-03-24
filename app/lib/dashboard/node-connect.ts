@@ -3,11 +3,13 @@ export function buildSkillYaml(origin: string, token?: string, forwardBaseUrl?: 
   const webhookUrl = forwardBaseUrl
     ? `${forwardBaseUrl}/webhook/{routeSlug}`
     : 'http://YOUR_OPENCLAW_HOST/webhook/{routeSlug}';
+  const wsOrigin = origin.replace(/^http/, 'ws');
   return `name: clawproxy-relay
 version: "1.0"
 description: Pulls and delivers webhook events from clawproxy
 
 connection:
+  ws_url: "${wsOrigin}/api/nodes/ws"
   pull_url: "${origin}/api/nodes/pull"
   ack_url: "${origin}/api/nodes/ack"
   token: "${tokenValue}"

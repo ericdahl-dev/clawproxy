@@ -55,6 +55,8 @@ type ConnectGuideProps = {
 
 function ConnectGuide({ origin, token, copiedField, onCopy, onClose }: ConnectGuideProps) {
   const [forwardBaseUrl, setForwardBaseUrl] = useState('');
+  const wsOrigin = origin.replace(/^http/, 'ws');
+  const wsUrl = `${wsOrigin}/api/nodes/ws`;
   const pullUrl = `${origin}/api/nodes/pull`;
   const ackUrl = `${origin}/api/nodes/ack`;
   const skillYaml = buildSkillYaml(origin, token, forwardBaseUrl || undefined);
@@ -63,13 +65,44 @@ function ConnectGuide({ origin, token, copiedField, onCopy, onClose }: ConnectGu
     <>
       <h3 className="text-lg font-semibold">Connect your OpenClaw node</h3>
       <p className="text-muted-foreground mt-1 text-sm">
-        Install this skill on your OpenClaw node. The skill will poll clawproxy for events,
-        forward each one to your local OpenClaw webhook system, then acknowledge delivery.
+        Install this skill on your OpenClaw node. The skill will connect to clawproxy via WebSocket
+        for real-time event delivery, falling back to HTTP polling when needed.
       </p>
 
       <div className="mt-5 space-y-4">
         <div>
-          <p className="mb-1.5 text-xs font-medium">Pull endpoint</p>
+          <p className="mb-1.5 text-xs font-medium">
+            WebSocket endpoint{' '}
+            <span className="text-emerald-400 font-normal">— recommended (live push)</span>
+          </p>
+          <div className="border-border/60 bg-background/60 flex items-center gap-2 rounded-lg border px-3 py-2">
+            <code className="flex-1 overflow-x-auto text-xs">{wsUrl}</code>
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={() => onCopy(wsUrl, 'ws')}
+              className="shrink-0"
+            >
+              {copiedField === 'ws' ? 'Copied!' : 'Copy'}
+            </Button>
+          </div>
+          <p className="text-muted-foreground mt-1 text-xs">
+            Events are pushed to the node the moment they arrive. Authenticate after connecting by
+            sending{' '}
+            <code className="bg-muted rounded px-1 py-0.5">
+              {'{'}
+              &quot;type&quot;:&quot;auth&quot;,&quot;token&quot;:&quot;cpn_…&quot;
+              {'}'}
+            </code>
+            .
+          </p>
+        </div>
+
+        <div>
+          <p className="mb-1.5 text-xs font-medium">
+            Pull endpoint{' '}
+            <span className="text-muted-foreground font-normal">— HTTP polling fallback</span>
+          </p>
           <div className="border-border/60 bg-background/60 flex items-center gap-2 rounded-lg border px-3 py-2">
             <code className="flex-1 overflow-x-auto text-xs">{pullUrl}</code>
             <Button
@@ -141,12 +174,13 @@ function ConnectGuide({ origin, token, copiedField, onCopy, onClose }: ConnectGu
       </div>
 
       <p className="text-muted-foreground mt-4 text-xs">
-        The skill polls the pull endpoint with{' '}
-        <code className="bg-muted rounded px-1 py-0.5">Authorization: Bearer &lt;token&gt;</code>,
-        replays each event&apos;s original headers and body to your OpenClaw webhook system using
-        the <code className="bg-muted rounded px-1 py-0.5">forward.webhook_url</code> (replacing{' '}
-        <code className="bg-muted rounded px-1 py-0.5">{'{routeSlug}'}</code> with the event&apos;s
-        route slug), then acknowledges delivery by posting the event IDs to the ack endpoint.
+        The skill connects via WebSocket and receives events in real-time. Alternatively, it polls
+        the pull endpoint with{' '}
+        <code className="bg-muted rounded px-1 py-0.5">Authorization: Bearer &lt;token&gt;</code>.
+        Each event&apos;s original headers and body are forwarded to your OpenClaw webhook system
+        using the <code className="bg-muted rounded px-1 py-0.5">forward.webhook_url</code>{' '}
+        (replacing <code className="bg-muted rounded px-1 py-0.5">{'{routeSlug}'}</code> with the
+        event&apos;s route slug), then delivery is acknowledged via the ack endpoint.
       </p>
 
       <Button className="mt-4 w-full" onClick={onClose}>

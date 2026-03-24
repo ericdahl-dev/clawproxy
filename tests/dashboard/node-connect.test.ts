@@ -5,10 +5,21 @@ import { buildSkillYaml, getNodeHealth } from '@/app/lib/dashboard/node-connect'
 describe('buildSkillYaml', () => {
   test('embeds origin URLs and placeholder token when token omitted', () => {
     const yaml = buildSkillYaml('https://relay.example');
+    expect(yaml).toContain('ws_url: "wss://relay.example/api/nodes/ws"');
     expect(yaml).toContain('pull_url: "https://relay.example/api/nodes/pull"');
     expect(yaml).toContain('ack_url: "https://relay.example/api/nodes/ack"');
     expect(yaml).toContain('token: "YOUR_NODE_TOKEN_HERE"');
     expect(yaml).toContain('name: clawproxy-relay');
+  });
+
+  test('uses wss:// for https:// origin', () => {
+    const yaml = buildSkillYaml('https://relay.example');
+    expect(yaml).toContain('ws_url: "wss://relay.example/api/nodes/ws"');
+  });
+
+  test('uses ws:// for http:// origin', () => {
+    const yaml = buildSkillYaml('http://localhost:3000');
+    expect(yaml).toContain('ws_url: "ws://localhost:3000/api/nodes/ws"');
   });
 
   test('embeds provided token', () => {
