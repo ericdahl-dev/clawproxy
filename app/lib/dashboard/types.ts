@@ -43,6 +43,7 @@ export type NodeRow = {
 
 export type RouteRow = {
   id: string;
+  userId: string;
   nodeId: string;
   nodeName: string | null;
   slug: string;

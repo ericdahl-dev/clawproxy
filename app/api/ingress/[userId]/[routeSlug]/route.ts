@@ -12,14 +12,14 @@ const LEASE_DURATION_MS = 60_000;
 
 export async function POST(
   request: Request,
-  context: { params: Promise<{ routeSlug: string }> }
+  context: { params: Promise<{ userId: string; routeSlug: string }> }
 ) {
-  const { routeSlug } = await context.params;
+  const { userId, routeSlug } = await context.params;
 
   const routeResult = await db
     .select()
     .from(routes)
-    .where(and(eq(routes.slug, routeSlug), eq(routes.enabled, true)))
+    .where(and(eq(routes.userId, userId), eq(routes.slug, routeSlug), eq(routes.enabled, true)))
     .limit(1);
 
   const route = routeResult[0];
@@ -93,4 +93,3 @@ export async function POST(
     { status: 202 }
   );
 }
-
