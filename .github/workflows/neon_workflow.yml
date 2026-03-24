@@ -1,12 +1,11 @@
 name: Create/Delete Branch for Pull Request
 
+# Disabled: automatic PR triggers are off. Restore the block below to re-enable:
+# on:
+#   pull_request:
+#     types: [opened, reopened, synchronize, closed]
 on:
-  pull_request:
-    types:
-      - opened
-      - reopened
-      - synchronize
-      - closed
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
