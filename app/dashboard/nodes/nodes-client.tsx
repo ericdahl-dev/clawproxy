@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import posthog from 'posthog-js';
 
 import { formatRelativeTime } from '@/app/lib/dashboard/datetime';
 import {
@@ -324,6 +325,7 @@ export function NodesClient({ initialNodes }: Props) {
       }
 
       setNodeList((prev) => [{ ...node, wsConnected: false }, ...prev]);
+      posthog.capture('node_created', { node_name: node.name, node_slug: node.slug });
       setCreatedToken(token ?? null);
       setTokenModalStep(1);
       setNameInput('');
@@ -351,6 +353,7 @@ export function NodesClient({ initialNodes }: Props) {
       });
 
       if (result.ok) {
+        posthog.capture('node_deleted', { node_id: nodeToDelete.id, node_name: nodeToDelete.name });
         setNodeList((prev) => prev.filter((n) => n.id !== nodeToDelete.id));
         setNodeToDelete(null);
       }
@@ -370,6 +373,7 @@ export function NodesClient({ initialNodes }: Props) {
       );
 
       if (result.ok && result.data.token) {
+        posthog.capture('node_token_regenerated', { node_id: nodeToRegenerate.id, node_name: nodeToRegenerate.name });
         setNodeToRegenerate(null);
         setRegeneratedToken(result.data.token);
         setRegeneratedTokenCopied(false);

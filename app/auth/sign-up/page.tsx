@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
+import posthog from 'posthog-js';
 
 import { createNeonClientAuth } from '@/app/lib/auth/client';
 import { useRedirect127ToLocalhost } from '@/app/lib/auth/dev-origin';
@@ -42,12 +43,16 @@ export default function SignUpPage() {
         throw new Error(result.error.message || 'Sign-up failed');
       }
 
+      posthog.identify(email, { email, name: name.trim() || email });
+      posthog.capture('user_signed_up', { email, name: name.trim() || email });
+
       setSuccess('Account created. You can now sign in.');
       setTimeout(() => {
         router.push('/auth/sign-in');
         router.refresh();
       }, 800);
     } catch (err) {
+      posthog.captureException(err);
       setError(err instanceof Error ? err.message : 'Sign-up failed');
     } finally {
       setSubmitting(false);

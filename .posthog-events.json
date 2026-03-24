@@ -1,0 +1,57 @@
+[
+  {
+    "event": "user_signed_in",
+    "description": "User successfully signed in with email and password",
+    "file": "app/auth/sign-in/page.tsx"
+  },
+  {
+    "event": "user_signed_up",
+    "description": "User successfully created a new account",
+    "file": "app/auth/sign-up/page.tsx"
+  },
+  {
+    "event": "node_created",
+    "description": "User created a new node in the dashboard",
+    "file": "app/dashboard/nodes/nodes-client.tsx"
+  },
+  {
+    "event": "node_deleted",
+    "description": "User deleted an existing node",
+    "file": "app/dashboard/nodes/nodes-client.tsx"
+  },
+  {
+    "event": "node_token_regenerated",
+    "description": "User regenerated the bearer token for a node",
+    "file": "app/dashboard/nodes/nodes-client.tsx"
+  },
+  {
+    "event": "route_created",
+    "description": "User created a new webhook route",
+    "file": "app/dashboard/routes/routes-client.tsx"
+  },
+  {
+    "event": "route_deleted",
+    "description": "User deleted an existing route",
+    "file": "app/dashboard/routes/routes-client.tsx"
+  },
+  {
+    "event": "route_toggled",
+    "description": "User enabled or disabled a route",
+    "file": "app/dashboard/routes/routes-client.tsx"
+  },
+  {
+    "event": "event_retried",
+    "description": "User manually retried a failed or expired delivery event",
+    "file": "app/dashboard/events/events-client.tsx"
+  },
+  {
+    "event": "webhook_received",
+    "description": "Incoming webhook event received via ingress endpoint",
+    "file": "app/api/ingress/[userId]/[routeSlug]/route.ts"
+  },
+  {
+    "event": "events_acknowledged",
+    "description": "Node acknowledged delivery of events via ack endpoint",
+    "file": "app/api/nodes/ack/route.ts"
+  }
+]

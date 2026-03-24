@@ -5,6 +5,7 @@ import { db } from '@/app/lib/db/client';
 import { decrypt, encrypt } from '@/app/lib/crypto/encryption';
 import { getDefaultEventExpiryDate } from '@/app/lib/events/expires-at';
 import { headersToObject } from '@/app/lib/http/headers';
+import { getPostHogClient } from '@/app/lib/posthog-server';
 import { isConnected, pushEventToNode } from '@/app/lib/ws/connection-manager';
 import { events, routes } from '@/db/schema';
 
@@ -82,6 +83,21 @@ export async function POST(
         attemptCount: leasedEvent.attemptCount ?? 1,
       });
     }
+  }
+
+  const ph = getPostHogClient();
+  if (ph) {
+    ph.capture({
+      distinctId: userId,
+      event: 'webhook_received',
+      properties: {
+        user_id: userId,
+        route_slug: routeSlug,
+        event_id: event.id,
+        node_connected: isConnected(route.nodeId),
+      },
+    });
+    await ph.shutdown();
   }
 
   return NextResponse.json(

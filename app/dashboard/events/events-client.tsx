@@ -2,6 +2,8 @@
 
 import { useCallback, useState } from 'react';
 
+import posthog from 'posthog-js';
+
 import { formatRelativeTime, formatTimestamp } from '@/app/lib/dashboard/datetime';
 import { adminJson } from '@/app/lib/dashboard/admin-fetch';
 import type { EventDetail, EventRow, EventStatus, NodeOption } from '@/app/lib/dashboard/types';
@@ -157,6 +159,7 @@ export function EventsClient({ initialEvents, availableNodes }: Props) {
         );
         return;
       }
+      posthog.capture('event_retried', { event_id: eventId });
       setSelectedEvent(null);
       void fetchEvents(selectedStatuses, selectedNodeId, dateRange, offset);
     } catch {

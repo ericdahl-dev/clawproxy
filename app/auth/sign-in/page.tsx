@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { FormEvent, Suspense, useState } from 'react';
+import posthog from 'posthog-js';
 
 import { createNeonClientAuth } from '@/app/lib/auth/client';
 import { useRedirect127ToLocalhost } from '@/app/lib/auth/dev-origin';
@@ -48,10 +49,14 @@ function SignInForm() {
         throw new Error(result.error.message || 'Sign-in failed');
       }
 
+      posthog.identify(email, { email });
+      posthog.capture('user_signed_in', { email });
+
       const redirectPath = resolvePostSignInRedirect(searchParams.get('next'));
       router.push(redirectPath);
       router.refresh();
     } catch (err) {
+      posthog.captureException(err);
       setError(err instanceof Error ? err.message : 'Sign-in failed');
     } finally {
       setSubmitting(false);
