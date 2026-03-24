@@ -75,6 +75,7 @@ describe('dashboard layout', () => {
       'Events',
     );
     expect(document.body.textContent).toContain('admin@example.com');
+    expect(document.body.textContent).toContain('Admin');
     expect(document.body.textContent).toContain('Sign out');
     expect(document.body.textContent).toContain('Dashboard content');
   });

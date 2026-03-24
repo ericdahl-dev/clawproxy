@@ -160,7 +160,6 @@ export function ArchitectureDiagram() {
           label="clawproxy"
           sublabel="Public cloud"
           items={['Accepts & validates', 'Stores in durable queue', 'Manages delivery state']}
-          badge="You run this"
         />
 
         <ArrowRight topLabel="outbound pull" bottomLabel="events + ack" />

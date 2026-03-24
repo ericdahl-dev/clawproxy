@@ -31,8 +31,11 @@ export default async function DashboardLayout({
               clawproxy dashboard
             </p>
             <h1 className="mt-2 text-2xl font-semibold">Dashboard</h1>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Signed in as {user.email ?? 'unknown user'}
+            <p className="text-muted-foreground mt-1 flex flex-wrap items-center gap-2 text-sm">
+              <span>Signed in as {user.email ?? 'unknown user'}</span>
+              <span className="border-brand-accent/40 text-brand-accent rounded-md border px-2 py-0.5 text-xs font-semibold tracking-wide uppercase">
+                Admin
+              </span>
             </p>
           </div>
 
