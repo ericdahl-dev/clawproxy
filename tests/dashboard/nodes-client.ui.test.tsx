@@ -282,7 +282,7 @@ describe('NodesClient', () => {
     );
   });
 
-  test('defaults OpenClaw base URL to localhost for new users', async () => {
+  test('defaults OpenClaw base URL to local dev (127.0.0.1:18789) for new users', async () => {
     window.localStorage.removeItem('nodes.openclawBaseUrl');
 
     const initialNodes = [
