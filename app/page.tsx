@@ -164,7 +164,7 @@ export default function Home() {
                     },
                     {
                       title: 'Ingress accepted',
-                      body: 'Request validated and persisted to the durable queue.',
+                      body: 'Validated and saved safely until delivery to your node.',
                     },
                     {
                       title: 'Live push or pull',
@@ -197,7 +197,7 @@ export default function Home() {
                   </div>
                   <div className="border-border bg-card/50 rounded-2xl border p-4">
                     <p className="text-muted-foreground text-xs tracking-[0.24em] uppercase">Storage</p>
-                    <p className="mt-2 text-lg font-semibold">Durable queue</p>
+                    <p className="mt-2 text-lg font-semibold">Safe until delivery</p>
                   </div>
                   <div className="border-border bg-card/50 rounded-2xl border p-4">
                     <p className="text-muted-foreground text-xs tracking-[0.24em] uppercase">Ideal for</p>

@@ -19,7 +19,7 @@ flowchart LR
     subgraph internet ["☁️ Public Internet"]
         P["Provider\nGitHub · Stripe · Slack"]
         C["clawproxy\n(public endpoint)"]
-        Q[("Durable\nqueue")]
+        Q[("Safe\nstorage")]
     end
 
     subgraph private ["🔒 Your Private Network"]
@@ -34,7 +34,7 @@ flowchart LR
 ```
 
 1. **A provider** (GitHub, Stripe, Slack, …) sends a webhook to your public clawproxy URL.
-2. **clawproxy** accepts the request, validates it, and persists the event to a durable queue.
+2. **clawproxy** accepts the request, validates it, and stores the event safely until your node connects.
 3. **Your OpenClaw node** — running behind NAT or a private LAN — connects to clawproxy over an outbound connection, receives queued events, processes them locally, and acknowledges delivery.
 
 Your private node never needs an open port or firewall rule.
