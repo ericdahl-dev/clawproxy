@@ -50,7 +50,7 @@ function validateAckEventIds(eventIds: unknown): string[] {
 
 async function authenticateToken(token: string): Promise<{ id: string } | null> {
   const tokenHash = hashNodeToken(token);
-  const rows = await db`
+  const rows = await db<AckResultRow[]>`
     SELECT id, status FROM nodes WHERE token_hash = ${tokenHash} LIMIT 1
   `;
   const node = rows[0] as { id: string; status: string } | undefined;
@@ -61,7 +61,7 @@ async function authenticateToken(token: string): Promise<{ id: string } | null> 
 const DEFAULT_MAX_RETRY_ATTEMPTS = 5;
 
 async function pushPendingEventsForNode(ws: WebSocket, nodeId: string): Promise<void> {
-  const rows = await db`
+  const rows = await db<WsEventPayload[]>`
     WITH candidates AS (
       SELECT e.id
       FROM events e
@@ -93,7 +93,8 @@ async function pushPendingEventsForNode(ws: WebSocket, nodeId: string): Promise<
       e.lease_expires_at::text AS "leaseExpiresAt",
       e.attempt_count AS "attemptCount"
   `;
-  for (const event of rows as WsEventPayload[]) {    ws.send(JSON.stringify({ type: 'event', ...event }));
+  for (const event of rows) {
+    ws.send(JSON.stringify({ type: 'event', ...event }));
   }
 }
 
@@ -117,7 +118,7 @@ async function handleAck(ws: WebSocket, nodeId: string, eventIds: unknown): Prom
       AND id IN ${db(validated)}
     RETURNING id
   `;
-  const ackedIds = (rows as AckResultRow[]).map((r) => r.id);
+  const ackedIds = rows.map((r) => r.id);
   ws.send(JSON.stringify({ type: 'ack_ok', acked: ackedIds.length, eventIds: ackedIds }));
 }
 
