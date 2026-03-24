@@ -155,4 +155,22 @@ describe('POST /api/admin/routes', () => {
     expect(body.ok).toBe(true);
     expect(body.route.slug).toBe('my-webhook');
   });
+
+  test('returns 409 when the route slug is already in use', async () => {
+    mockRequireAdminUser.mockResolvedValue(mockUser);
+    mockDb.select.mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({ limit: vi.fn().mockResolvedValue([{ id: 'node-uuid-1' }]) }),
+      }),
+    });
+    const uniqueViolation = Object.assign(new Error('duplicate key'), { code: '23505' });
+    mockDbInsertReturning.mockRejectedValue(uniqueViolation);
+
+    const response = await POST(makeRequest({ nodeId: 'node-uuid-1', slug: 'taken-slug' }));
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.ok).toBe(false);
+    expect(body.error).toMatch(/slug is already in use/i);
+  });
 });

@@ -5,6 +5,15 @@ import { db } from '@/app/lib/db/client';
 import { jsonError, jsonOk, withAdminUser } from '@/app/lib/http/admin-json';
 import { nodes, routes } from '@/db/schema';
 
+function isUniqueViolation(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code: string }).code === '23505'
+  );
+}
+
 function slugifyRouteSlug(value: string) {
   return value
     .trim()
@@ -64,21 +73,29 @@ export async function POST(request: Request) {
       return jsonError('Node not found', 404);
     }
 
-    const inserted = await db
-      .insert(routes)
-      .values({
-        userId,
-        nodeId,
-        slug,
-      })
-      .returning({
-        id: routes.id,
-        nodeId: routes.nodeId,
-        slug: routes.slug,
-        enabled: routes.enabled,
-        createdAt: routes.createdAt,
-      });
+    try {
+      const inserted = await db
+        .insert(routes)
+        .values({
+          userId,
+          nodeId,
+          slug,
+        })
+        .returning({
+          id: routes.id,
+          nodeId: routes.nodeId,
+          slug: routes.slug,
+          enabled: routes.enabled,
+          createdAt: routes.createdAt,
+        });
 
-    return jsonOk({ route: inserted[0] });
+      return jsonOk({ route: inserted[0] });
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        return jsonError('That slug is already in use. Choose a different slug.', 409);
+      }
+      console.error('[POST /api/admin/routes] insert failed', error);
+      return jsonError('Could not create route. Check your database connection and try again.', 500);
+    }
   });
 }
