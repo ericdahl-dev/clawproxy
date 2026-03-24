@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 
 import { formatRelativeTime } from '@/app/lib/dashboard/datetime';
 import {
-  buildSkillYaml,
+  buildOpenClawSetupBlock,
   getNodeHealth,
   type NodeHealth,
 } from '@/app/lib/dashboard/node-connect';
@@ -45,6 +45,22 @@ function HealthBadge({ health }: { health: NodeHealth }) {
         })}
       />
       {health}
+    </span>
+  );
+}
+
+function WsBadge({ connected }: { connected: boolean }) {
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium',
+        connected
+          ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+          : 'bg-zinc-500/15 text-zinc-400 border-zinc-500/30',
+      )}
+    >
+      <span className={cn('size-1.5 rounded-full', connected ? 'bg-emerald-400' : 'bg-zinc-400')} />
+      {connected ? 'connected' : 'disconnected'}
     </span>
   );
 }
@@ -123,7 +139,7 @@ function ConnectGuide({
   const wsUrl = `${wsOrigin}/api/nodes/ws`;
   const pullUrl = `${origin}/api/nodes/pull`;
   const ackUrl = `${origin}/api/nodes/ack`;
-  const skillYaml = buildSkillYaml(origin, token, forwardBaseUrl || undefined);
+  const setupBlock = buildOpenClawSetupBlock(origin, token, forwardBaseUrl || undefined);
 
   return (
     <>
@@ -216,17 +232,17 @@ function ConnectGuide({
 
         <div>
           <div className="mb-1.5 flex items-center justify-between">
-            <p className="text-xs font-medium">OpenClaw skill configuration</p>
+            <p className="text-xs font-medium">One-paste OpenClaw setup block</p>
             <Button
               size="xs"
               variant="outline"
-              onClick={() => onCopy(skillYaml, 'skill')}
+              onClick={() => onCopy(setupBlock, 'setup')}
             >
-              {copiedField === 'skill' ? 'Copied!' : 'Copy'}
+              {copiedField === 'setup' ? 'Copied!' : 'Copy'}
             </Button>
           </div>
           <pre className="border-border/60 bg-background/60 overflow-x-auto rounded-lg border p-3 text-xs leading-relaxed">
-            {skillYaml}
+            {setupBlock}
           </pre>
           {!token && (
             <p className="text-muted-foreground mt-1.5 text-xs">
@@ -284,7 +300,9 @@ export function NodesClient({ initialNodes }: Props) {
     setCreateError(null);
 
     try {
-      const result = await adminJson<{ ok: true; node: NodeRow; token?: string }>('/api/admin/nodes', {
+      const result = await adminJson<
+        { ok: true; node: Omit<NodeRow, 'wsConnected'>; token?: string }
+      >('/api/admin/nodes', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ name: nameInput, slug: slugInput || undefined }),
@@ -305,7 +323,7 @@ export function NodesClient({ initialNodes }: Props) {
         return;
       }
 
-      setNodeList((prev) => [node, ...prev]);
+      setNodeList((prev) => [{ ...node, wsConnected: false }, ...prev]);
       setCreatedToken(token ?? null);
       setTokenModalStep(1);
       setNameInput('');
@@ -496,6 +514,7 @@ export function NodesClient({ initialNodes }: Props) {
                 <th className="text-muted-foreground px-5 py-3 text-left font-medium">Name</th>
                 <th className="text-muted-foreground px-5 py-3 text-left font-medium">Slug</th>
                 <th className="text-muted-foreground px-5 py-3 text-left font-medium">Health</th>
+                <th className="text-muted-foreground px-5 py-3 text-left font-medium">WS</th>
                 <th className="text-muted-foreground px-5 py-3 text-left font-medium">Last seen</th>
                 <th className="px-5 py-3" />
               </tr>
@@ -511,6 +530,9 @@ export function NodesClient({ initialNodes }: Props) {
                     </td>
                     <td className="px-5 py-3">
                       <HealthBadge health={health} />
+                    </td>
+                    <td className="px-5 py-3">
+                      <WsBadge connected={node.wsConnected} />
                     </td>
                     <td className="text-muted-foreground px-5 py-3">
                       {formatRelativeTime(node.lastSeenAt, { absentLabel: 'Never' })}
