@@ -55,6 +55,11 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Custom server (`server.js`) calls `next()`; standalone tracing omits most of
+# `next/dist/compiled` (including webpack), but the programmatic server still loads it.
+# Without this, production fails with MODULE_NOT_FOUND for webpack-lib in the container.
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/next/dist/compiled ./node_modules/next/dist/compiled
+
 USER nextjs
 
 EXPOSE 3000
