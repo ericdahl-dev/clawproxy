@@ -2,6 +2,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 import { db } from '@/app/lib/db/client';
+import { decrypt, encrypt } from '@/app/lib/crypto/encryption';
 import { getDefaultEventExpiryDate } from '@/app/lib/events/expires-at';
 import { headersToObject } from '@/app/lib/http/headers';
 import { isConnected, pushEventToNode } from '@/app/lib/ws/connection-manager';
@@ -42,8 +43,8 @@ export async function POST(
       userId: route.userId,
       nodeId: route.nodeId,
       routeId: route.id,
-      headersJson: headersToObject(request.headers),
-      bodyText,
+      headersJson: encrypt(JSON.stringify(headersToObject(request.headers))),
+      bodyText: encrypt(bodyText),
       contentType,
       expiresAt: getDefaultEventExpiryDate(),
     })
@@ -73,8 +74,8 @@ export async function POST(
         id: leasedEvent.id,
         routeId: leasedEvent.routeId,
         routeSlug,
-        headers: leasedEvent.headersJson as Record<string, string>,
-        body: leasedEvent.bodyText ?? '',
+        headers: JSON.parse(decrypt(leasedEvent.headersJson)) as Record<string, string>,
+        body: decrypt(leasedEvent.bodyText ?? ''),
         contentType: leasedEvent.contentType,
         receivedAt: leasedEvent.receivedAt?.toISOString() ?? '',
         leaseExpiresAt: leasedEvent.leaseExpiresAt?.toISOString() ?? '',

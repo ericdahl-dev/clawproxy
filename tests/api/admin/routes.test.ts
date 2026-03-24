@@ -39,6 +39,11 @@ vi.mock('@/app/lib/auth/require-admin', () => ({
 
 vi.mock('@/app/lib/db/client', () => ({ db: mockDb }));
 
+vi.mock('@/app/lib/crypto/encryption', () => ({
+  encrypt: vi.fn((v: string) => `enc:${v}`),
+  decrypt: vi.fn((v: string) => v.replace(/^enc:/, '')),
+}));
+
 import { GET, POST } from '@/app/api/admin/routes/route';
 
 const mockRoute = {

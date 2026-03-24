@@ -1,5 +1,6 @@
 import { and, desc, eq, gte, inArray } from 'drizzle-orm';
 
+import { decrypt } from '@/app/lib/crypto/encryption';
 import { db } from '@/app/lib/db/client';
 import { jsonOk, withAdminUser } from '@/app/lib/http/admin-json';
 import { events, nodes } from '@/db/schema';
@@ -79,6 +80,8 @@ export async function GET(request: Request) {
       .limit(limitValue)
       .offset(offsetValue);
 
-    return jsonOk({ events: result });
+    return jsonOk({
+      events: result.map((e) => ({ ...e, nodeName: e.nodeName ? decrypt(e.nodeName) : null })),
+    });
   });
 }

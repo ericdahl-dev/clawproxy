@@ -1,6 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 
 import { db } from '@/app/lib/db/client';
+import { decrypt } from '@/app/lib/crypto/encryption';
 import { jsonError, jsonOk, withAdminUser } from '@/app/lib/http/admin-json';
 import { events, nodes } from '@/db/schema';
 
@@ -38,6 +39,14 @@ export async function GET(
       return jsonError('Event not found', 404);
     }
 
-    return jsonOk({ event: result[0] });
+    const row = result[0];
+    const event = {
+      ...row,
+      nodeName: row.nodeName ? decrypt(row.nodeName) : null,
+      headersJson: JSON.parse(decrypt(row.headersJson)) as Record<string, string>,
+      bodyText: decrypt(row.bodyText),
+    };
+
+    return jsonOk({ event });
   });
 }
