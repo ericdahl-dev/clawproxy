@@ -19,6 +19,7 @@ export default async function DashboardRoutesPage() {
     db
       .select({
         id: routes.id,
+        userId: routes.userId,
         nodeId: routes.nodeId,
         nodeName: nodes.name,
         slug: routes.slug,

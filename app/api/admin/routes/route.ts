@@ -29,6 +29,7 @@ export async function GET() {
     const result = await db
       .select({
         id: routes.id,
+        userId: routes.userId,
         nodeId: routes.nodeId,
         nodeName: nodes.name,
         slug: routes.slug,
@@ -83,6 +84,7 @@ export async function POST(request: Request) {
         })
         .returning({
           id: routes.id,
+          userId: routes.userId,
           nodeId: routes.nodeId,
           slug: routes.slug,
           enabled: routes.enabled,
