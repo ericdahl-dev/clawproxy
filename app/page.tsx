@@ -300,6 +300,18 @@ export default function Home() {
           </div>
         </section>
       </section>
+
+      <footer className="border-border/40 border-t py-6 text-center">
+        <p className="text-muted-foreground text-sm">
+          made by{' '}
+          <a
+            href="https://ericdahl.dev"
+            className="hover:text-foreground underline transition-colors"
+          >
+            ericdahl.dev
+          </a>
+        </p>
+      </footer>
     </main>
   );
 }
