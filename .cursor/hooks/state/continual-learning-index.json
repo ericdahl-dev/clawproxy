@@ -2,36 +2,112 @@
   "version": 1,
   "transcripts": {
     "/Users/edahl/.cursor/projects/Users-edahl-Documents-GitHub-clawproxy/agent-transcripts/002a2386-b47b-43a7-9bb6-d4d8a6298d1c/002a2386-b47b-43a7-9bb6-d4d8a6298d1c.jsonl": {
-      "mtimeMs": 1774147725000,
-      "lastProcessedAt": "2026-03-22T18:50:20.000Z"
+      "mtimeMs": 1774147725785,
+      "lastProcessedAt": "2026-03-24T17:12:51.000Z"
+    },
+    "/Users/edahl/.cursor/projects/Users-edahl-Documents-GitHub-clawproxy/agent-transcripts/00b15c83-33c0-4e9e-8f2a-3c17f962ee31/00b15c83-33c0-4e9e-8f2a-3c17f962ee31.jsonl": {
+      "mtimeMs": 1774226238061,
+      "lastProcessedAt": "2026-03-24T17:12:51.000Z"
     },
     "/Users/edahl/.cursor/projects/Users-edahl-Documents-GitHub-clawproxy/agent-transcripts/17d40776-be56-4ea6-825f-eefa95f4c2f3/17d40776-be56-4ea6-825f-eefa95f4c2f3.jsonl": {
-      "mtimeMs": 1774152428000,
-      "lastProcessedAt": "2026-03-22T18:50:20.000Z"
+      "mtimeMs": 1774152428835,
+      "lastProcessedAt": "2026-03-24T17:12:51.000Z"
+    },
+    "/Users/edahl/.cursor/projects/Users-edahl-Documents-GitHub-clawproxy/agent-transcripts/21b55e6e-d718-45aa-86db-451b69f1cdde/21b55e6e-d718-45aa-86db-451b69f1cdde.jsonl": {
+      "mtimeMs": 1774363680053,
+      "lastProcessedAt": "2026-03-24T17:12:51.000Z"
+    },
+    "/Users/edahl/.cursor/projects/Users-edahl-Documents-GitHub-clawproxy/agent-transcripts/40b689da-069d-4673-9390-aaf557f316c8/40b689da-069d-4673-9390-aaf557f316c8.jsonl": {
+      "mtimeMs": 1774327126562,
+      "lastProcessedAt": "2026-03-24T17:12:51.000Z"
+    },
+    "/Users/edahl/.cursor/projects/Users-edahl-Documents-GitHub-clawproxy/agent-transcripts/41fe7e85-46cb-422a-8c88-0ae7a0c8f370/41fe7e85-46cb-422a-8c88-0ae7a0c8f370.jsonl": {
+      "mtimeMs": 1774320336000,
+      "lastProcessedAt": "2026-03-24T17:12:51.000Z"
+    },
+    "/Users/edahl/.cursor/projects/Users-edahl-Documents-GitHub-clawproxy/agent-transcripts/45b9e640-cbcd-45f8-a380-8a78e5af79f0/45b9e640-cbcd-45f8-a380-8a78e5af79f0.jsonl": {
+      "mtimeMs": 1774226932241,
+      "lastProcessedAt": "2026-03-24T17:12:51.000Z"
     },
     "/Users/edahl/.cursor/projects/Users-edahl-Documents-GitHub-clawproxy/agent-transcripts/5dd5e71e-38d9-4b89-80b2-83af608fd7af/5dd5e71e-38d9-4b89-80b2-83af608fd7af.jsonl": {
-      "mtimeMs": 1774205388000,
-      "lastProcessedAt": "2026-03-22T18:50:20.000Z"
+      "mtimeMs": 1774206132975,
+      "lastProcessedAt": "2026-03-24T17:12:51.000Z"
+    },
+    "/Users/edahl/.cursor/projects/Users-edahl-Documents-GitHub-clawproxy/agent-transcripts/60816355-d298-4b22-ac3e-086d47cb5a66/60816355-d298-4b22-ac3e-086d47cb5a66.jsonl": {
+      "mtimeMs": 1774325530960,
+      "lastProcessedAt": "2026-03-24T17:12:51.000Z"
+    },
+    "/Users/edahl/.cursor/projects/Users-edahl-Documents-GitHub-clawproxy/agent-transcripts/75bfdfd7-040d-4cb2-bcf1-6bf77cdbe883/75bfdfd7-040d-4cb2-bcf1-6bf77cdbe883.jsonl": {
+      "mtimeMs": 1774372307512,
+      "lastProcessedAt": "2026-03-24T17:12:51.000Z"
     },
     "/Users/edahl/.cursor/projects/Users-edahl-Documents-GitHub-clawproxy/agent-transcripts/7789530a-c2e6-405b-81e3-3151c665b97d/7789530a-c2e6-405b-81e3-3151c665b97d.jsonl": {
-      "mtimeMs": 1774155771000,
-      "lastProcessedAt": "2026-03-22T18:50:20.000Z"
+      "mtimeMs": 1774155771647,
+      "lastProcessedAt": "2026-03-24T17:12:51.000Z"
+    },
+    "/Users/edahl/.cursor/projects/Users-edahl-Documents-GitHub-clawproxy/agent-transcripts/7b0b1a3f-2dab-4a53-bc19-8d06ec7af9d8/7b0b1a3f-2dab-4a53-bc19-8d06ec7af9d8.jsonl": {
+      "mtimeMs": 1774320715719,
+      "lastProcessedAt": "2026-03-24T17:12:51.000Z"
+    },
+    "/Users/edahl/.cursor/projects/Users-edahl-Documents-GitHub-clawproxy/agent-transcripts/7b57ee5d-b37a-461c-bb62-ad5aa48e3096/7b57ee5d-b37a-461c-bb62-ad5aa48e3096.jsonl": {
+      "mtimeMs": 1774229477325,
+      "lastProcessedAt": "2026-03-24T17:12:51.000Z"
+    },
+    "/Users/edahl/.cursor/projects/Users-edahl-Documents-GitHub-clawproxy/agent-transcripts/80e5047f-5b5b-499b-9879-30684de9e4ce/80e5047f-5b5b-499b-9879-30684de9e4ce.jsonl": {
+      "mtimeMs": 1774209051569,
+      "lastProcessedAt": "2026-03-24T17:12:51.000Z"
+    },
+    "/Users/edahl/.cursor/projects/Users-edahl-Documents-GitHub-clawproxy/agent-transcripts/861cf074-067e-4500-85f2-a3182cd5592f/861cf074-067e-4500-85f2-a3182cd5592f.jsonl": {
+      "mtimeMs": 1774324098170,
+      "lastProcessedAt": "2026-03-24T17:12:51.000Z"
+    },
+    "/Users/edahl/.cursor/projects/Users-edahl-Documents-GitHub-clawproxy/agent-transcripts/a9d70bbe-5901-4f43-87a3-e4b64277c831/a9d70bbe-5901-4f43-87a3-e4b64277c831.jsonl": {
+      "mtimeMs": 1774233203202,
+      "lastProcessedAt": "2026-03-24T17:12:51.000Z"
+    },
+    "/Users/edahl/.cursor/projects/Users-edahl-Documents-GitHub-clawproxy/agent-transcripts/adb7eac6-bc72-4072-ae22-9ecf7ed5096a/adb7eac6-bc72-4072-ae22-9ecf7ed5096a.jsonl": {
+      "mtimeMs": 1774274625791,
+      "lastProcessedAt": "2026-03-24T17:12:51.000Z"
+    },
+    "/Users/edahl/.cursor/projects/Users-edahl-Documents-GitHub-clawproxy/agent-transcripts/b118bb57-9ea3-42c6-ad34-a0bb0c62162b/b118bb57-9ea3-42c6-ad34-a0bb0c62162b.jsonl": {
+      "mtimeMs": 1774324587147,
+      "lastProcessedAt": "2026-03-24T17:12:51.000Z"
+    },
+    "/Users/edahl/.cursor/projects/Users-edahl-Documents-GitHub-clawproxy/agent-transcripts/b180dc0e-90a9-4397-9ec9-1065c76bd37e/b180dc0e-90a9-4397-9ec9-1065c76bd37e.jsonl": {
+      "mtimeMs": 1774364991972,
+      "lastProcessedAt": "2026-03-24T17:12:51.000Z"
     },
     "/Users/edahl/.cursor/projects/Users-edahl-Documents-GitHub-clawproxy/agent-transcripts/b28cb09c-17a2-46ad-a35b-3b31168f904e/b28cb09c-17a2-46ad-a35b-3b31168f904e.jsonl": {
-      "mtimeMs": 1774159223000,
-      "lastProcessedAt": "2026-03-22T18:50:20.000Z"
+      "mtimeMs": 1774159223104,
+      "lastProcessedAt": "2026-03-24T17:12:51.000Z"
     },
     "/Users/edahl/.cursor/projects/Users-edahl-Documents-GitHub-clawproxy/agent-transcripts/b6ce4f82-eb35-43d1-a778-d60f039408c9/b6ce4f82-eb35-43d1-a778-d60f039408c9.jsonl": {
-      "mtimeMs": 1774157413000,
-      "lastProcessedAt": "2026-03-22T18:50:20.000Z"
+      "mtimeMs": 1774157413805,
+      "lastProcessedAt": "2026-03-24T17:12:51.000Z"
+    },
+    "/Users/edahl/.cursor/projects/Users-edahl-Documents-GitHub-clawproxy/agent-transcripts/d48a85be-dcf2-4d65-92e6-6f67069eed6d/d48a85be-dcf2-4d65-92e6-6f67069eed6d.jsonl": {
+      "mtimeMs": 1774322125607,
+      "lastProcessedAt": "2026-03-24T17:12:51.000Z"
     },
     "/Users/edahl/.cursor/projects/Users-edahl-Documents-GitHub-clawproxy/agent-transcripts/d4e1af69-1244-4b96-a5cc-5b8a18e8e4ec/d4e1af69-1244-4b96-a5cc-5b8a18e8e4ec.jsonl": {
-      "mtimeMs": 1774156949000,
-      "lastProcessedAt": "2026-03-22T18:50:20.000Z"
+      "mtimeMs": 1774156949227,
+      "lastProcessedAt": "2026-03-24T17:12:51.000Z"
+    },
+    "/Users/edahl/.cursor/projects/Users-edahl-Documents-GitHub-clawproxy/agent-transcripts/d7adc668-cf73-4b66-bc55-c992f740faf2/d7adc668-cf73-4b66-bc55-c992f740faf2.jsonl": {
+      "mtimeMs": 1774324482637,
+      "lastProcessedAt": "2026-03-24T17:12:51.000Z"
     },
     "/Users/edahl/.cursor/projects/Users-edahl-Documents-GitHub-clawproxy/agent-transcripts/ddd0de67-4ba3-4361-a2f0-6cde56e1ff01/ddd0de67-4ba3-4361-a2f0-6cde56e1ff01.jsonl": {
-      "mtimeMs": 1774149233000,
-      "lastProcessedAt": "2026-03-22T18:50:20.000Z"
+      "mtimeMs": 1774149233117,
+      "lastProcessedAt": "2026-03-24T17:12:51.000Z"
+    },
+    "/Users/edahl/.cursor/projects/Users-edahl-Documents-GitHub-clawproxy/agent-transcripts/e45dc4d4-9e75-46fc-b001-f5958e0d7a81/e45dc4d4-9e75-46fc-b001-f5958e0d7a81.jsonl": {
+      "mtimeMs": 1774364811692,
+      "lastProcessedAt": "2026-03-24T17:12:51.000Z"
+    },
+    "/Users/edahl/.cursor/projects/Users-edahl-Documents-GitHub-clawproxy/agent-transcripts/e6ebc0d8-dead-4373-a8de-79d70eeba555/e6ebc0d8-dead-4373-a8de-79d70eeba555.jsonl": {
+      "mtimeMs": 1774323721882,
+      "lastProcessedAt": "2026-03-24T17:12:51.000Z"
     }
   }
 }
