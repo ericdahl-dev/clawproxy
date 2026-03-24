@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 
+import posthog from 'posthog-js';
+
 import { adminJson } from '@/app/lib/dashboard/admin-fetch';
 import type { NodeOption, RouteRow } from '@/app/lib/dashboard/types';
 import { Button } from '@/components/ui/button';
@@ -79,6 +81,7 @@ export function RoutesClient({ initialRoutes, availableNodes }: Props) {
       const node = availableNodes.find((n) => n.id === nodeIdInput);
       const newRoute: RouteRow = { ...route, nodeName: node?.name ?? null };
       setRouteList((prev) => [newRoute, ...prev]);
+      posthog.capture('route_created', { route_slug: route.slug, node_id: route.nodeId });
       setSlugInput('');
       setNodeIdInput(availableNodes[0]?.id ?? '');
       setShowCreateForm(false);
@@ -114,6 +117,7 @@ export function RoutesClient({ initialRoutes, availableNodes }: Props) {
       }
 
       setRouteList((prev) => prev.filter((r) => r.id !== routeToDelete.id));
+      posthog.capture('route_deleted', { route_id: routeToDelete.id, route_slug: routeToDelete.slug });
       setRouteToDelete(null);
     } catch {
       setDeleteError('Failed to delete route due to a network error. Please try again.');
@@ -150,6 +154,7 @@ export function RoutesClient({ initialRoutes, availableNodes }: Props) {
         setRouteList((prev) =>
           prev.map((r) => (r.id === route.id ? { ...r, enabled: data.route!.enabled } : r)),
         );
+        posthog.capture('route_toggled', { route_id: route.id, route_slug: route.slug, enabled: !route.enabled });
       }
     } catch {
       setToggleError('Failed to update route due to a network error. Please try again.');

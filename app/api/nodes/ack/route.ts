@@ -8,6 +8,7 @@ import {
   validateAckEventIds,
   type AckUpdateRow,
 } from '@/app/lib/events/ack';
+import { getPostHogClient } from '@/app/lib/posthog-server';
 
 export async function POST(request: Request) {
   try {
@@ -27,9 +28,24 @@ export async function POST(request: Request) {
       RETURNING id
     `;
 
+    const summary = summarizeAckedEvents(updatedRows);
+
+    const ph = getPostHogClient();
+    if (ph) {
+      ph.capture({
+        distinctId: node.id,
+        event: 'events_acknowledged',
+        properties: {
+          node_id: node.id,
+          acked_count: summary.acked,
+        },
+      });
+      await ph.shutdown();
+    }
+
     return NextResponse.json({
       ok: true,
-      ...summarizeAckedEvents(updatedRows),
+      ...summary,
     });
   } catch (error) {
     if (error instanceof AckValidationError) {
