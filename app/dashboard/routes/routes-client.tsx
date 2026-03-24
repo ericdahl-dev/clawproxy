@@ -250,11 +250,12 @@ export function RoutesClient({ initialRoutes, availableNodes }: Props) {
         )
       ) : (
         <div className="border-border/70 bg-background/40 overflow-hidden rounded-2xl border">
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-border/50 border-b">
                 <th className="text-muted-foreground px-5 py-3 text-left font-medium">Slug</th>
-                <th className="text-muted-foreground px-5 py-3 text-left font-medium">Node</th>
+                <th className="text-muted-foreground hidden px-5 py-3 text-left font-medium sm:table-cell">Node</th>
                 <th className="text-muted-foreground px-5 py-3 text-left font-medium">Status</th>
                 <th className="text-muted-foreground px-5 py-3 text-left font-medium">
                   Public URL
@@ -268,7 +269,7 @@ export function RoutesClient({ initialRoutes, availableNodes }: Props) {
                   <td className="text-muted-foreground px-5 py-3 font-mono text-xs">
                     {route.slug}
                   </td>
-                  <td className="px-5 py-3 font-medium">{route.nodeName ?? '—'}</td>
+                  <td className="hidden px-5 py-3 font-medium sm:table-cell">{route.nodeName ?? '—'}</td>
                   <td className="px-5 py-3">
                     <EnabledBadge enabled={route.enabled} />
                   </td>
@@ -304,6 +305,7 @@ export function RoutesClient({ initialRoutes, availableNodes }: Props) {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
