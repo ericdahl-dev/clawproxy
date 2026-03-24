@@ -1,0 +1,7 @@
+{
+  "scripts": {
+    "setup": "yarn install",
+    "teardown": null,
+    "run": "yarn dev"
+  }
+}
