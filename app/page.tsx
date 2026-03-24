@@ -300,6 +300,10 @@ export default function Home() {
           </div>
         </section>
       </section>
+
+      <footer className="border-border/40 border-t py-6 text-center">
+        <p className="text-muted-foreground text-sm">made by ericdahl.dev</p>
+      </footer>
     </main>
   );
 }
