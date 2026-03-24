@@ -1,27 +1,50 @@
 import 'server-only';
 
-import { count, eq } from 'drizzle-orm';
+import { count, desc, eq } from 'drizzle-orm';
 
 import { requireAdminUser } from '@/app/lib/auth/require-admin';
+import {
+  DAILY_EVENT_CHART_DAYS,
+  getDailyEventCounts,
+} from '@/app/lib/dashboard/event-daily-counts';
+import { decrypt } from '@/app/lib/crypto/encryption';
 import { db } from '@/app/lib/db/client';
-import { events } from '@/db/schema';
+import { events, nodes } from '@/db/schema';
+import { DashboardEventsChart } from '@/components/app/dashboard-events-chart';
+import { DashboardMetricCards } from '@/components/app/dashboard-metric-cards';
 import { DashboardPageHeader } from '@/components/app/dashboard-page-header';
+import { DashboardRecentEvents } from '@/components/app/dashboard-recent-events';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export const dynamic = 'force-dynamic';
-
-type EventStatus = 'pending' | 'leased' | 'delivered' | 'failed' | 'expired';
 
 export default async function DashboardPage() {
   const user = await requireAdminUser();
 
-  const countsByStatus = await db
-    .select({
-      status: events.status,
-      count: count(),
-    })
-    .from(events)
-    .where(eq(events.userId, user.id))
-    .groupBy(events.status);
+  const [countsByStatus, dailySeries, recentList] = await Promise.all([
+    db
+      .select({
+        status: events.status,
+        count: count(),
+      })
+      .from(events)
+      .where(eq(events.userId, user.id))
+      .groupBy(events.status),
+    getDailyEventCounts(user.id),
+    db
+      .select({
+        id: events.id,
+        nodeName: nodes.name,
+        status: events.status,
+        contentType: events.contentType,
+        receivedAt: events.receivedAt,
+      })
+      .from(events)
+      .leftJoin(nodes, eq(events.nodeId, nodes.id))
+      .where(eq(events.userId, user.id))
+      .orderBy(desc(events.receivedAt))
+      .limit(10),
+  ]);
 
   const totals = countsByStatus.reduce<Record<string, number>>((acc, row) => {
     acc[row.status] = Number(row.count);
@@ -36,72 +59,47 @@ export default async function DashboardPage() {
   const leased = totals.leased ?? 0;
   const successRate = total > 0 ? Math.round((delivered / total) * 100) : 0;
 
-  const statusCards: { label: string; value: number; status: EventStatus }[] = [
-    { label: 'Pending', value: pending, status: 'pending' },
-    { label: 'Leased', value: leased, status: 'leased' },
-    { label: 'Delivered', value: delivered, status: 'delivered' },
-    { label: 'Failed', value: failed, status: 'failed' },
-    { label: 'Expired', value: expired, status: 'expired' },
-  ];
-
-  const statusColors: Record<EventStatus, string> = {
-    pending: 'text-blue-400',
-    leased: 'text-amber-400',
-    delivered: 'text-emerald-400',
-    failed: 'text-red-400',
-    expired: 'text-zinc-400',
-  };
+  const recentRows = recentList.map((e) => ({
+    id: e.id,
+    status: e.status,
+    nodeName: e.nodeName ? decrypt(e.nodeName) : null,
+    contentType: e.contentType,
+    receivedAt: e.receivedAt,
+  }));
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-8">
       <DashboardPageHeader
         eyebrow="Overview"
         title="Welcome back"
         description="Use the dashboard navigation to manage nodes, routes, and events for your public ingress and private delivery pipeline."
       />
 
-      <div>
-        <p className="mb-3 text-sm font-medium">Event summary</p>
-        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          <article className="border-border/70 bg-background/40 rounded-2xl border p-4">
-            <p className="text-muted-foreground text-xs">Total</p>
-            <p className="mt-1 text-2xl font-semibold">{total}</p>
-          </article>
-          <article className="border-border/70 bg-background/40 rounded-2xl border p-4">
-            <p className="text-muted-foreground text-xs">Success rate</p>
-            <p className="mt-1 text-2xl font-semibold">{successRate}%</p>
-          </article>
-          {statusCards.map((card) => (
-            <article key={card.status} className="border-border/70 bg-background/40 rounded-2xl border p-4">
-              <p className="text-muted-foreground text-xs">{card.label}</p>
-              <p className={`mt-1 text-2xl font-semibold ${statusColors[card.status]}`}>
-                {card.value}
-              </p>
-            </article>
-          ))}
-        </div>
-      </div>
+      <DashboardMetricCards
+        total={total}
+        successRate={successRate}
+        delivered={delivered}
+        failed={failed}
+        pending={pending}
+        leased={leased}
+        expired={expired}
+      />
 
-      <div className="grid gap-4 md:grid-cols-3">
-        {[
-          {
-            title: 'Nodes',
-            description: 'Register OpenClaw nodes and monitor their connection status.',
-          },
-          {
-            title: 'Routes',
-            description: 'Define public webhook endpoints and inspect ingress settings.',
-          },
-          {
-            title: 'Events',
-            description: 'Review queued events, delivery attempts, and failures.',
-          },
-        ].map((item) => (
-          <article key={item.title} className="border-border/70 bg-background/40 rounded-2xl border p-5">
-            <h3 className="text-lg font-semibold">{item.title}</h3>
-            <p className="text-muted-foreground mt-2 text-sm leading-6">{item.description}</p>
-          </article>
-        ))}
+      <div className="flex min-w-0 flex-col gap-6">
+        <Card size="sm" className="min-w-0">
+          <CardHeader>
+            <CardTitle>Events over time</CardTitle>
+            <CardDescription>
+              Received webhooks per day (UTC), last {DAILY_EVENT_CHART_DAYS} days.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DashboardEventsChart data={dailySeries} />
+          </CardContent>
+        </Card>
+        <div className="min-w-0">
+          <DashboardRecentEvents events={recentRows} />
+        </div>
       </div>
     </section>
   );

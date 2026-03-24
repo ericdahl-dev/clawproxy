@@ -1,5 +1,11 @@
 export type EventStatus = 'pending' | 'leased' | 'delivered' | 'failed' | 'expired';
 
+/** One day bucket for the dashboard events-over-time chart (ISO date `YYYY-MM-DD`). */
+export type DailyEventPoint = {
+  date: string;
+  events: number;
+};
+
 export type EventRow = {
   id: string;
   nodeId: string;

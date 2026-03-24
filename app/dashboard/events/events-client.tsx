@@ -5,6 +5,7 @@ import { useCallback, useState } from 'react';
 import { formatRelativeTime, formatTimestamp } from '@/app/lib/dashboard/datetime';
 import { adminJson } from '@/app/lib/dashboard/admin-fetch';
 import type { EventDetail, EventRow, EventStatus, NodeOption } from '@/app/lib/dashboard/types';
+import { EventStatusBadge, EVENT_STATUS_DOT, EVENT_STATUS_STYLES } from '@/components/app/event-status-badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/app/lib/utils';
 
@@ -15,22 +16,6 @@ type Props = {
 
 const ALL_STATUSES: EventStatus[] = ['pending', 'leased', 'delivered', 'failed', 'expired'];
 
-const STATUS_STYLES: Record<EventStatus, string> = {
-  pending: 'border-blue-500/30 bg-blue-500/15 text-blue-400',
-  leased: 'border-amber-500/30 bg-amber-500/15 text-amber-400',
-  delivered: 'border-emerald-500/30 bg-emerald-500/15 text-emerald-400',
-  failed: 'border-red-500/30 bg-red-500/15 text-red-400',
-  expired: 'border-zinc-500/30 bg-zinc-500/15 text-zinc-400',
-};
-
-const STATUS_DOT: Record<EventStatus, string> = {
-  pending: 'bg-blue-400',
-  leased: 'bg-amber-400',
-  delivered: 'bg-emerald-400',
-  failed: 'bg-red-400',
-  expired: 'bg-zinc-400',
-};
-
 const DATE_RANGES = [
   { label: 'All time', value: '' },
   { label: 'Last 24h', value: '24h' },
@@ -39,20 +24,6 @@ const DATE_RANGES = [
 ];
 
 const PAGE_SIZE = 50;
-
-function StatusBadge({ status }: { status: EventStatus }) {
-  return (
-    <span
-      className={cn(
-        'inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium',
-        STATUS_STYLES[status],
-      )}
-    >
-      <span className={cn('size-1.5 rounded-full', STATUS_DOT[status])} />
-      {status}
-    </span>
-  );
-}
 
 export function EventsClient({ initialEvents, availableNodes }: Props) {
   const [eventList, setEventList] = useState<EventRow[]>(initialEvents);
@@ -209,14 +180,14 @@ export function EventsClient({ initialEvents, availableNodes }: Props) {
               className={cn(
                 'inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium transition',
                 selectedStatuses.has(status)
-                  ? STATUS_STYLES[status]
+                  ? EVENT_STATUS_STYLES[status]
                   : 'border-border/50 text-muted-foreground hover:border-border',
               )}
             >
               <span
                 className={cn(
                   'size-1.5 rounded-full',
-                  selectedStatuses.has(status) ? STATUS_DOT[status] : 'bg-muted-foreground/50',
+                  selectedStatuses.has(status) ? EVENT_STATUS_DOT[status] : 'bg-muted-foreground/50',
                 )}
               />
               {status}
@@ -288,7 +259,7 @@ export function EventsClient({ initialEvents, availableNodes }: Props) {
                     className="border-border/30 hover:bg-muted/30 cursor-pointer border-b last:border-b-0 transition"
                   >
                     <td className="px-5 py-3">
-                      <StatusBadge status={event.status} />
+                      <EventStatusBadge status={event.status} />
                     </td>
                     <td className="px-5 py-3 font-medium">{event.nodeName ?? '—'}</td>
                     <td className="text-muted-foreground px-5 py-3 font-mono text-xs">
@@ -383,7 +354,7 @@ export function EventsClient({ initialEvents, availableNodes }: Props) {
                   <div>
                     <p className="text-muted-foreground text-xs">Status</p>
                     <div className="mt-1">
-                      <StatusBadge status={selectedEvent.status} />
+                      <EventStatusBadge status={selectedEvent.status} />
                     </div>
                   </div>
                   <div>

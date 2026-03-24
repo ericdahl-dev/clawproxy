@@ -3,6 +3,8 @@ import { JSDOM } from 'jsdom';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 
+import { TooltipProvider } from '@/components/ui/tooltip';
+
 const redirectMock = vi.fn((path: string) => {
   throw new Error(`REDIRECT:${path}`);
 });
@@ -58,7 +60,11 @@ describe('dashboard layout', () => {
 
     const dashboardLayout = await import('@/app/dashboard/layout');
     const html = renderToStaticMarkup(
-      await dashboardLayout.default({ children: createElement('section', null, 'Dashboard content') }),
+      createElement(
+        TooltipProvider,
+        null,
+        await dashboardLayout.default({ children: createElement('section', null, 'Dashboard content') }),
+      ),
     );
     const dom = new JSDOM(html);
     const document = dom.window.document;
@@ -76,7 +82,7 @@ describe('dashboard layout', () => {
     );
     expect(document.body.textContent).toContain('admin@example.com');
     expect(document.body.textContent).toContain('Admin');
-    expect(document.body.textContent).toContain('Sign out');
+    expect(document.body.textContent).toContain('clawproxy');
     expect(document.body.textContent).toContain('Dashboard content');
   });
 });
