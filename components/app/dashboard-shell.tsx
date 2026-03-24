@@ -26,7 +26,9 @@ export function DashboardShell({ userEmail, children }: DashboardShellProps) {
           <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
           <DashboardBreadcrumb />
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 md:p-6">{children}</div>
+        <div className="flex flex-1 flex-col p-4 md:p-6">
+          <div className="mx-auto flex w-full max-w-7xl flex-col gap-4">{children}</div>
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );
