@@ -34,7 +34,7 @@ vi.mock('@/app/lib/crypto/encryption', () => ({
   decrypt: vi.fn((v: string) => v.replace(/^enc:/, '')),
 }));
 
-import { POST } from '@/app/api/ingress/[routeSlug]/route';
+import { POST } from '@/app/api/ingress/[userId]/[routeSlug]/route';
 
 const mockRoute = {
   id: 'route-uuid-1',
@@ -46,19 +46,19 @@ const mockRoute = {
   updatedAt: new Date(),
 };
 
-function makeRequest(slug: string, body = '{}', contentType = 'application/json') {
-  return new Request(`http://localhost/api/ingress/${slug}`, {
+function makeRequest(userId: string, slug: string, body = '{}', contentType = 'application/json') {
+  return new Request(`http://localhost/api/ingress/${userId}/${slug}`, {
     method: 'POST',
     headers: { 'content-type': contentType },
     body,
   });
 }
 
-function makeContext(routeSlug: string) {
-  return { params: Promise.resolve({ routeSlug }) };
+function makeContext(userId: string, routeSlug: string) {
+  return { params: Promise.resolve({ userId, routeSlug }) };
 }
 
-describe('POST /api/ingress/[routeSlug]', () => {
+describe('POST /api/ingress/[userId]/[routeSlug]', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockIsConnected.mockReturnValue(false);
@@ -70,7 +70,7 @@ describe('POST /api/ingress/[routeSlug]', () => {
   test('returns 404 when the route slug does not exist', async () => {
     mockDbSelectLimit.mockResolvedValue([]);
 
-    const response = await POST(makeRequest('unknown-route'), makeContext('unknown-route'));
+    const response = await POST(makeRequest('user-1', 'unknown-route'), makeContext('user-1', 'unknown-route'));
     const body = await response.json();
 
     expect(response.status).toBe(404);
@@ -82,7 +82,7 @@ describe('POST /api/ingress/[routeSlug]', () => {
     mockDbSelectLimit.mockResolvedValue([mockRoute]);
     mockDbInsertReturning.mockResolvedValue([{ id: 'event-uuid-1', status: 'pending' }]);
 
-    const response = await POST(makeRequest('my-webhook', '{"key":"value"}'), makeContext('my-webhook'));
+    const response = await POST(makeRequest('user-1', 'my-webhook', '{"key":"value"}'), makeContext('user-1', 'my-webhook'));
     const body = await response.json();
 
     expect(response.status).toBe(202);
@@ -96,7 +96,7 @@ describe('POST /api/ingress/[routeSlug]', () => {
     mockDbInsertReturning.mockResolvedValue([{ id: 'event-uuid-2', status: 'pending' }]);
 
     const rawBody = 'plain text payload';
-    const response = await POST(makeRequest('my-webhook', rawBody, 'text/plain'), makeContext('my-webhook'));
+    const response = await POST(makeRequest('user-1', 'my-webhook', rawBody, 'text/plain'), makeContext('user-1', 'my-webhook'));
     const body = await response.json();
 
     expect(response.status).toBe(202);
@@ -122,7 +122,7 @@ describe('POST /api/ingress/[routeSlug]', () => {
     };
     mockDbUpdate.mockResolvedValue([leasedEvent]);
 
-    const response = await POST(makeRequest('my-webhook', '{"ws":true}'), makeContext('my-webhook'));
+    const response = await POST(makeRequest('user-1', 'my-webhook', '{"ws":true}'), makeContext('user-1', 'my-webhook'));
     const body = await response.json();
 
     expect(response.status).toBe(202);
@@ -143,7 +143,7 @@ describe('POST /api/ingress/[routeSlug]', () => {
     mockDbSelectLimit.mockResolvedValue([mockRoute]);
     mockDbInsertReturning.mockResolvedValue([{ id: 'event-poll-1', status: 'pending' }]);
 
-    await POST(makeRequest('my-webhook'), makeContext('my-webhook'));
+    await POST(makeRequest('user-1', 'my-webhook'), makeContext('user-1', 'my-webhook'));
 
     expect(mockDb.update).not.toHaveBeenCalled();
     expect(mockPushEventToNode).not.toHaveBeenCalled();
@@ -155,7 +155,7 @@ describe('POST /api/ingress/[routeSlug]', () => {
     mockDbInsertReturning.mockResolvedValue([{ id: 'event-race-1', status: 'pending' }]);
     mockDbUpdate.mockResolvedValue([]); // race: already leased by pull
 
-    await POST(makeRequest('my-webhook'), makeContext('my-webhook'));
+    await POST(makeRequest('user-1', 'my-webhook'), makeContext('user-1', 'my-webhook'));
 
     expect(mockDb.update).toHaveBeenCalled();
     expect(mockPushEventToNode).not.toHaveBeenCalled();

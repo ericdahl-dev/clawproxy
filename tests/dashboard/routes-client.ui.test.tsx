@@ -38,6 +38,7 @@ describe('RoutesClient', () => {
           ok: true,
           route: {
             id: 'new-r',
+            userId: 'user-1',
             nodeId: 'node-1',
             slug: 'my-hook',
             enabled: true,

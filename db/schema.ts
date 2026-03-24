@@ -54,7 +54,7 @@ export const routes = pgTable(
   (table) => [
     index('routes_node_id_idx').on(table.nodeId),
     index('routes_user_id_idx').on(table.userId),
-    uniqueIndex('routes_slug_key').on(table.slug),
+    uniqueIndex('routes_user_id_slug_key').on(table.userId, table.slug),
   ]
 );
 

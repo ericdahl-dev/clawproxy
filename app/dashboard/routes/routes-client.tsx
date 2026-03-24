@@ -158,8 +158,8 @@ export function RoutesClient({ initialRoutes, availableNodes }: Props) {
     }
   }
 
-  async function handleCopyUrl(slug: string, routeId: string) {
-    const url = `${window.location.origin}/api/ingress/${slug}`;
+  async function handleCopyUrl(userId: string, slug: string, routeId: string) {
+    const url = `${window.location.origin}/api/ingress/${userId}/${slug}`;
     await navigator.clipboard.writeText(url);
     setCopiedRouteId(routeId);
     setTimeout(() => setCopiedRouteId(null), 2000);
@@ -276,7 +276,7 @@ export function RoutesClient({ initialRoutes, availableNodes }: Props) {
                     <Button
                       variant="outline"
                       size="xs"
-                      onClick={() => handleCopyUrl(route.slug, route.id)}
+                      onClick={() => handleCopyUrl(route.userId, route.slug, route.id)}
                     >
                       {copiedRouteId === route.id ? 'Copied!' : 'Copy URL'}
                     </Button>

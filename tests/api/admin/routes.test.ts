@@ -48,6 +48,7 @@ import { GET, POST } from '@/app/api/admin/routes/route';
 
 const mockRoute = {
   id: 'route-uuid-1',
+  userId: 'user-1',
   nodeId: 'node-uuid-1',
   slug: 'my-webhook',
   enabled: true,
