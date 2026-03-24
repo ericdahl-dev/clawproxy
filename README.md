@@ -6,6 +6,14 @@ See [PLAN.md](./PLAN.md) for the full product specification and architectural de
 
 ## How it works
 
+Private OpenClaw nodes connect to clawproxy in one of two ways:
+
+**WebSocket (live push — recommended):** The node opens a persistent WebSocket connection to `/api/nodes/ws`. Events are pushed to the node in real-time the moment they arrive, with no polling delay.
+
+**HTTP polling (fallback):** The node periodically calls `POST /api/nodes/pull` to fetch queued events. Useful when WebSocket connections are not available.
+
+Both modes use the same lease/acknowledge delivery guarantee.
+
 ```mermaid
 flowchart LR
     subgraph internet ["☁️ Public Internet"]
@@ -20,16 +28,44 @@ flowchart LR
 
     P -- "webhook POST" --> C
     C --> Q
-    N -- "outbound pull" --> Q
-    Q -- "events" --> N
+    N -- "WebSocket / outbound pull" --> C
+    C -- "events (push or poll)" --> N
     N -- "acknowledge" --> C
 ```
 
 1. **A provider** (GitHub, Stripe, Slack, …) sends a webhook to your public clawproxy URL.
 2. **clawproxy** accepts the request, validates it, and persists the event to a durable queue.
-3. **Your OpenClaw node** — running behind NAT or a private LAN — polls clawproxy over an outbound connection, fetches queued events, processes them locally, and acknowledges delivery.
+3. **Your OpenClaw node** — running behind NAT or a private LAN — connects to clawproxy over an outbound connection, receives queued events, processes them locally, and acknowledges delivery.
 
 Your private node never needs an open port or firewall rule.
+
+## WebSocket Protocol
+
+Nodes connect to `wss://<your-clawproxy-host>/api/nodes/ws` and authenticate immediately after the connection is established.
+
+**Node → clawproxy:**
+
+| Message | Description |
+|---|---|
+| `{ "type": "auth", "token": "cpn_..." }` | Authenticate with the node bearer token |
+| `{ "type": "ack", "eventIds": ["uuid", ...] }` | Acknowledge one or more delivered events |
+
+**clawproxy → node:**
+
+| Message | Description |
+|---|---|
+| `{ "type": "auth_ok", "nodeId": "uuid" }` | Authentication succeeded |
+| `{ "type": "auth_error", "error": "..." }` | Authentication failed |
+| `{ "type": "event", "id": "...", "routeSlug": "...", "body": "...", ... }` | An event ready to process |
+| `{ "type": "ack_ok", "acked": 2, "eventIds": [...] }` | Acknowledge confirmed |
+| `{ "type": "ack_error", "error": "..." }` | Acknowledge validation failed |
+
+**Connection lifecycle:**
+1. Open `wss://…/api/nodes/ws`
+2. Send `{ "type": "auth", "token": "cpn_…" }` within 10 seconds
+3. Receive `auth_ok` — any pending events are flushed immediately
+4. Receive `event` messages in real-time; send `ack` for each batch processed
+5. Reconnect on close (the pull-based HTTP endpoints remain available as a fallback)
 
 ## Getting Started
 
@@ -61,6 +97,14 @@ yarn dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+To develop with WebSocket support enabled, use the custom server instead:
+
+```bash
+yarn dev:ws
+```
+
+This starts the HTTP+WebSocket server (`server.ts`) directly via `tsx` and also serves the Next.js app on port 3000. Connect nodes to `ws://localhost:3000/api/nodes/ws`.
 
 ### Database
 
@@ -125,8 +169,9 @@ Or push to a connected platform (Railway, Render, etc.) and it will detect the `
 
 | Script | Description |
 |---|---|
-| `yarn dev` | Start development server |
-| `yarn build` | Build for production |
+| `yarn dev` | Start Next.js development server (HTTP only) |
+| `yarn dev:ws` | Start custom HTTP+WebSocket development server |
+| `yarn build` | Build for production (bundles WebSocket server into standalone output) |
 | `yarn start` | Start production server |
 | `yarn lint` | Run ESLint |
 | `yarn test` | Run tests in watch mode |
