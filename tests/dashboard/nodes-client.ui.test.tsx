@@ -62,7 +62,7 @@ describe('NodesClient', () => {
       rowDelete!.click();
     });
 
-    const confirmDelete = Array.from(container.querySelectorAll('button')).find(
+    const confirmDelete = Array.from(document.body.querySelectorAll('button')).find(
       (b) => b.textContent?.trim() === 'Delete node',
     );
     expect(confirmDelete).toBeTruthy();
@@ -76,5 +76,192 @@ describe('NodesClient', () => {
       credentials: 'same-origin',
     });
     expect(container.textContent).toContain('No nodes have been registered yet');
+  });
+
+  test('keeps connect modal visible within the viewport', async () => {
+    const initialNodes = [
+      {
+        id: 'node-1',
+        name: 'Worker',
+        slug: 'worker',
+        status: 'active' as const,
+        lastSeenAt: null,
+        createdAt: '2025-01-01T00:00:00.000Z',
+      },
+    ];
+
+    await act(async () => {
+      root.render(createElement(NodesClient, { initialNodes }));
+    });
+
+    const connectButton = Array.from(container.querySelectorAll('button')).find(
+      (b) => b.textContent?.trim() === 'Connect',
+    );
+    expect(connectButton).toBeTruthy();
+
+    await act(async () => {
+      connectButton!.click();
+    });
+
+    const modalTitle = Array.from(document.body.querySelectorAll('h3')).find(
+      (h) => h.textContent?.trim() === 'Connect your OpenClaw node',
+    );
+    expect(modalTitle).toBeTruthy();
+
+    const modalPanel = modalTitle?.closest('div');
+    expect(modalPanel).toBeTruthy();
+    expect(modalPanel?.className).toContain('max-h-[calc(100dvh-2rem)]');
+    expect(modalPanel?.className).toContain('overflow-y-auto');
+  });
+
+  test('closes connect modal on Escape', async () => {
+    const initialNodes = [
+      {
+        id: 'node-1',
+        name: 'Worker',
+        slug: 'worker',
+        status: 'active' as const,
+        lastSeenAt: null,
+        createdAt: '2025-01-01T00:00:00.000Z',
+      },
+    ];
+
+    await act(async () => {
+      root.render(createElement(NodesClient, { initialNodes }));
+    });
+
+    const connectButton = Array.from(container.querySelectorAll('button')).find(
+      (b) => b.textContent?.trim() === 'Connect',
+    );
+    expect(connectButton).toBeTruthy();
+
+    await act(async () => {
+      connectButton!.click();
+    });
+
+    expect(document.body.textContent).toContain('Connect your OpenClaw node');
+
+    await act(async () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+
+    expect(document.body.textContent).not.toContain('Connect your OpenClaw node');
+  });
+
+  test('closes connect modal on backdrop click', async () => {
+    const initialNodes = [
+      {
+        id: 'node-1',
+        name: 'Worker',
+        slug: 'worker',
+        status: 'active' as const,
+        lastSeenAt: null,
+        createdAt: '2025-01-01T00:00:00.000Z',
+      },
+    ];
+
+    await act(async () => {
+      root.render(createElement(NodesClient, { initialNodes }));
+    });
+
+    const connectButton = Array.from(container.querySelectorAll('button')).find(
+      (b) => b.textContent?.trim() === 'Connect',
+    );
+    expect(connectButton).toBeTruthy();
+
+    await act(async () => {
+      connectButton!.click();
+    });
+
+    expect(document.body.textContent).toContain('Connect your OpenClaw node');
+
+    const backdrop = document.body.querySelector('[data-testid="modal-backdrop"]');
+    expect(backdrop).toBeTruthy();
+
+    await act(async () => {
+      backdrop!.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    });
+
+    expect(document.body.textContent).not.toContain('Connect your OpenClaw node');
+  });
+
+  test('shows OpenClaw prompt and reuses saved URL in connect modal', async () => {
+    const initialNodes = [
+      {
+        id: 'node-1',
+        name: 'Worker',
+        slug: 'worker',
+        status: 'active' as const,
+        lastSeenAt: null,
+        createdAt: '2025-01-01T00:00:00.000Z',
+      },
+    ];
+
+    await act(async () => {
+      root.render(createElement(NodesClient, { initialNodes }));
+    });
+
+    expect(container.textContent).toContain('Connect your OpenClaw instance');
+
+    const urlInput = container.querySelector('#openclaw-base-url') as HTMLInputElement | null;
+    expect(urlInput).toBeTruthy();
+
+    const valueSetter = Object.getOwnPropertyDescriptor(
+      window.HTMLInputElement.prototype,
+      'value',
+    )?.set;
+    expect(valueSetter).toBeTruthy();
+
+    await act(async () => {
+      valueSetter!.call(urlInput, 'http://openclaw-host:8080');
+      urlInput!.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
+    const saveButton = Array.from(container.querySelectorAll('button')).find(
+      (b) => b.textContent?.trim() === 'Save URL',
+    );
+    expect(saveButton).toBeTruthy();
+
+    await act(async () => {
+      saveButton!.click();
+    });
+
+    expect(window.localStorage.getItem('nodes.openclawBaseUrl')).toBe('http://openclaw-host:8080');
+
+    const connectButton = Array.from(container.querySelectorAll('button')).find(
+      (b) => b.textContent?.trim() === 'Connect',
+    );
+    expect(connectButton).toBeTruthy();
+
+    await act(async () => {
+      connectButton!.click();
+    });
+
+    const modalInput = document.body.querySelector('#openclaw-url') as HTMLInputElement | null;
+    expect(modalInput).toBeTruthy();
+    expect(modalInput?.value).toBe('http://openclaw-host:8080');
+  });
+
+  test('defaults OpenClaw base URL to localhost for new users', async () => {
+    window.localStorage.removeItem('nodes.openclawBaseUrl');
+
+    const initialNodes = [
+      {
+        id: 'node-1',
+        name: 'Worker',
+        slug: 'worker',
+        status: 'active' as const,
+        lastSeenAt: null,
+        createdAt: '2025-01-01T00:00:00.000Z',
+      },
+    ];
+
+    await act(async () => {
+      root.render(createElement(NodesClient, { initialNodes }));
+    });
+
+    const urlInput = container.querySelector('#openclaw-base-url') as HTMLInputElement | null;
+    expect(urlInput).toBeTruthy();
+    expect(urlInput?.value).toBe('http://localhost:8080');
   });
 });
