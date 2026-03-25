@@ -6,6 +6,25 @@ const proofPoints = [
   'Self-hostable',
   'Durable delivery',
   'Private-node friendly',
+  'ngrok alternative',
+];
+
+const comparisonPoints = [
+  {
+    title: 'No tunnel dependency',
+    description:
+      'clawproxy runs as a standalone service. Your node connects outbound — no tunnel daemon to keep alive on the receiving end.',
+  },
+  {
+    title: 'Events survive restarts',
+    description:
+      'Unlike tunnels that drop in-flight traffic when the process exits, clawproxy persists every event until it is acknowledged delivered.',
+  },
+  {
+    title: 'Self-hosted and yours',
+    description:
+      'Deploy on your own infrastructure. No third-party relay in the webhook path, no usage-based pricing, and no rate limits imposed by a vendor.',
+  },
 ];
 
 const featureCards = [
@@ -97,7 +116,7 @@ export default function Home() {
         <section className="grid items-center gap-16 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:py-24">
           <div className="max-w-3xl">
             <div className="border-brand-accent/25 bg-brand-accent/10 text-brand-accent inline-flex items-center rounded-full border px-4 py-2 text-sm font-medium shadow-lg shadow-black/25 backdrop-blur">
-              Stop exposing ports just to receive webhooks
+              The self-hosted alternative to ngrok and Cloudflare Tunnels
             </div>
 
             <h1 className="mt-8 text-5xl font-semibold leading-[1.02] text-balance sm:text-6xl lg:text-7xl">
@@ -219,6 +238,34 @@ export default function Home() {
               <p className="text-muted-foreground mt-3 text-sm leading-7">{feature.description}</p>
             </article>
           ))}
+        </section>
+
+        <section className="border-border border-t py-14">
+          <div className="mb-10">
+            <p className="text-brand-accent text-sm font-semibold tracking-[0.32em] uppercase">
+              Coming from ngrok or Cloudflare Tunnels?
+            </p>
+            <h2 className="mt-4 text-3xl font-semibold sm:text-4xl">
+              Purpose-built for webhook delivery — not general tunneling.
+            </h2>
+            <p className="text-muted-foreground mt-4 max-w-2xl text-base leading-7">
+              ngrok and Cloudflare Tunnels are excellent general-purpose tools, but clawproxy is
+              laser-focused on one job: durable webhook ingress and private node delivery without
+              keeping a tunnel daemon running.
+            </p>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-3">
+            {comparisonPoints.map((point) => (
+              <article
+                key={point.title}
+                className="border-border bg-card/40 rounded-[1.75rem] border p-6 backdrop-blur"
+              >
+                <h3 className="text-xl font-semibold">{point.title}</h3>
+                <p className="text-muted-foreground mt-3 text-sm leading-7">{point.description}</p>
+              </article>
+            ))}
+          </div>
         </section>
 
         <section
