@@ -32,7 +32,7 @@ describe('landing page ngrok/Cloudflare Tunnels comparison section', () => {
 
     expect(html).toContain('No tunnel dependency');
     expect(html).toContain('Events survive restarts');
-    expect(html).toContain('Self-hosted and yours');
+    expect(html).toContain('No vendor lock-in');
   });
 
   test('proof points include ngrok alternative badge', async () => {
