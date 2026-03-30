@@ -68,6 +68,8 @@ describe('dashboard entry page', () => {
     const dom = new JSDOM(html);
 
     expect(dom.window.document.body.textContent).toContain('Welcome back');
+    expect(dom.window.document.body.textContent).toContain('Live relay console');
+    expect(dom.window.document.body.textContent).toContain('Hermes Agent and OpenClaw');
     expect(dom.window.document.body.textContent).toContain('Event metrics');
     expect(dom.window.document.body.textContent).toContain('Events over time');
     expect(dom.window.document.body.textContent).toContain('Recent events');

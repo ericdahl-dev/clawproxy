@@ -14,6 +14,7 @@ import { DashboardEventsChart } from '@/components/app/dashboard-events-chart';
 import { DashboardMetricCards } from '@/components/app/dashboard-metric-cards';
 import { DashboardPageHeader } from '@/components/app/dashboard-page-header';
 import { DashboardRecentEvents } from '@/components/app/dashboard-recent-events';
+import { DashboardRelaySummary } from '@/components/app/dashboard-relay-summary';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export const dynamic = 'force-dynamic';
@@ -72,8 +73,10 @@ export default async function DashboardPage() {
       <DashboardPageHeader
         eyebrow="Overview"
         title="Welcome back"
-        description="Use the dashboard navigation to manage nodes, routes, and events for your public ingress and private delivery pipeline."
+        description="Use the dashboard navigation to manage nodes, routes, and events for your public ingress and Hermes Agent / OpenClaw delivery pipeline."
       />
+
+      <DashboardRelaySummary />
 
       <DashboardMetricCards
         total={total}
