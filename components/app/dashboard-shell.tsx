@@ -20,14 +20,26 @@ export function DashboardShell({ userEmail, children }: DashboardShellProps) {
   return (
     <SidebarProvider>
       <DashboardAppSidebar userEmail={userEmail} />
-      <SidebarInset className="bg-background min-h-svh">
-        <header className="bg-background/80 flex h-14 shrink-0 items-center gap-2 border-b px-4 backdrop-blur md:px-6">
-          <SidebarTrigger />
-          <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
+      <SidebarInset className="relative min-h-svh overflow-hidden bg-brand-page">
+        <div
+          className="pointer-events-none absolute inset-0 -z-10"
+          style={{
+            background: `
+              radial-gradient(circle at 78% 0%, color-mix(in oklab, var(--color-brand-accent) 16%, transparent), transparent 28%),
+              radial-gradient(circle at 12% 18%, color-mix(in oklab, var(--color-brand-accent-muted) 55%, transparent), transparent 32%),
+              linear-gradient(180deg, var(--color-brand-page), var(--color-background) 48%, var(--color-brand-page))
+            `,
+          }}
+        />
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(rgba(255,255,255,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.025)_1px,transparent_1px)] bg-[size:44px_44px] opacity-35" />
+
+        <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border/70 bg-brand-page/70 px-4 backdrop-blur-xl md:px-6">
+          <SidebarTrigger className="rounded-full border border-border/80 bg-background/30 text-muted-foreground hover:border-brand-accent/60 hover:text-foreground" />
+          <Separator orientation="vertical" className="mr-1 bg-border/70 data-[orientation=vertical]:h-5" />
           <DashboardBreadcrumb />
         </header>
-        <div className="flex flex-1 flex-col p-4 md:p-6">
-          <div className="mx-auto flex w-full max-w-7xl flex-col gap-4">{children}</div>
+        <div className="flex flex-1 flex-col p-4 md:p-8">
+          <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">{children}</div>
         </div>
       </SidebarInset>
     </SidebarProvider>

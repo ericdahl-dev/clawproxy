@@ -38,13 +38,17 @@ function MetricCard({
   valueClassName?: string;
 }) {
   return (
-    <Card size="sm">
+    <Card size="sm" className="bg-card/55">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-muted-foreground text-sm font-medium">{title}</CardTitle>
-        <Icon className="text-muted-foreground size-4 shrink-0" aria-hidden />
+        <CardTitle className="text-muted-foreground font-mono text-xs font-medium tracking-[0.12em] uppercase">
+          {title}
+        </CardTitle>
+        <Icon className="size-4 shrink-0 text-brand-accent" aria-hidden />
       </CardHeader>
       <CardContent className="pt-0">
-        <div className={cn('text-2xl font-semibold tabular-nums', valueClassName)}>{value}</div>
+        <div className={cn('text-3xl font-semibold tracking-[-0.04em] tabular-nums', valueClassName)}>
+          {value}
+        </div>
         <CardDescription className="mt-1 text-xs leading-snug">{description}</CardDescription>
       </CardContent>
     </Card>
@@ -65,7 +69,7 @@ export function DashboardMetricCards({
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold">Event metrics</h2>
+        <h2 className="text-2xl font-semibold tracking-[-0.035em]">Event metrics</h2>
         <p className="text-muted-foreground mt-1 text-sm">
           Snapshot of webhook events stored for your account.
         </p>

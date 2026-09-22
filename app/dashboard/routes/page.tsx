@@ -38,7 +38,7 @@ export default async function DashboardRoutesPage() {
   ]);
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-8">
       <DashboardPageHeader
         eyebrow="Routes"
         title="Webhook routes"

@@ -75,7 +75,7 @@ export default async function DashboardPage() {
   }));
 
   return (
-    <section className="space-y-8">
+    <section className="space-y-10">
       <DashboardPageHeader eyebrow="Overview" title={intro.title} description={intro.description} />
 
       {intro.cta ? (
@@ -99,7 +99,7 @@ export default async function DashboardPage() {
       ) : null}
 
       <div className="flex min-w-0 flex-col gap-6">
-        <Card size="sm" className="min-w-0">
+        <Card size="sm" className="min-w-0 bg-card/55">
           <CardHeader>
             <CardTitle>Events over time</CardTitle>
             <CardDescription>
