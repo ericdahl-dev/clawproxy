@@ -34,7 +34,7 @@ export const nodes = pgTable(
   },
   (table) => [
     index('nodes_user_id_idx').on(table.userId),
-    uniqueIndex('nodes_slug_key').on(table.slug),
+    uniqueIndex('nodes_user_id_slug_key').on(table.userId, table.slug),
   ]
 );
 
