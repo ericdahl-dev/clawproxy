@@ -8,6 +8,7 @@ import {
   DEFAULT_MAX_RETRY_ATTEMPTS,
 } from '@/app/lib/events/leases';
 import { sql } from '@/app/lib/db';
+import { markNodeSeen } from '@/app/lib/nodes/mark-seen';
 
 type RawPullEventRow = {
   id: string;
@@ -31,11 +32,7 @@ export async function POST(request: Request) {
     const body = (await request.json().catch(() => ({}))) as { maxEvents?: number };
     const maxEvents = clampMaxPullEvents(body.maxEvents);
 
-    await sql`
-      UPDATE nodes
-      SET last_seen_at = now(), updated_at = now()
-      WHERE id = ${node.id}
-    `;
+    await markNodeSeen(sql, node.id);
 
     await sql`
       UPDATE events
