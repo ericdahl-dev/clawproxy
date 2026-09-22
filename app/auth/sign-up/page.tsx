@@ -46,11 +46,18 @@ export default function SignUpPage() {
       posthog.identify(email, { email, name: name.trim() || email });
       posthog.capture('user_signed_up', { email, name: name.trim() || email });
 
-      setSuccess('Account created. You can now sign in.');
-      setTimeout(() => {
-        router.push('/auth/sign-in');
+      // Sign the new account straight in: bouncing to the sign-in form made a successful
+      // sign-up look like a failure. If that doesn't work, say so on the sign-in page.
+      const signedIn = await auth.signIn.email({ email, password });
+      if (signedIn?.error) {
+        router.push('/auth/sign-in?registered=1');
         router.refresh();
-      }, 800);
+        return;
+      }
+
+      setSuccess('Account created. Taking you to your dashboard…');
+      router.push('/dashboard');
+      router.refresh();
     } catch (err) {
       posthog.captureException(err);
       setError(err instanceof Error ? err.message : 'Sign-up failed');
@@ -62,7 +69,7 @@ export default function SignUpPage() {
   return (
     <AdminShell
       title="Create account"
-      description="Create a Neon Auth account for managing nodes, routes, and events."
+      description="Create an account to manage your nodes, routes, and events."
     >
       <form className="mt-2 space-y-4" onSubmit={onSubmit}>
         <div className="space-y-2">

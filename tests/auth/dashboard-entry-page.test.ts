@@ -20,6 +20,8 @@ const { mockDb } = vi.hoisted(() => {
             };
           }
           return {
+            // The node-count query awaits `.where()` directly; the recent-events query chains.
+            where: () => Promise.resolve([{ count: 1 }]),
             leftJoin: () => ({
               where: () => ({
                 orderBy: () => ({

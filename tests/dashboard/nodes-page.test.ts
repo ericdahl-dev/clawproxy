@@ -51,6 +51,6 @@ describe('dashboard nodes page', () => {
     const html = renderToStaticMarkup(element);
     const dom = new JSDOM(html);
 
-    expect(dom.window.document.body.textContent).toContain('No nodes have been registered yet');
+    expect(dom.window.document.body.textContent).toContain('No nodes yet');
   });
 });

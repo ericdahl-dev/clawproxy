@@ -66,9 +66,15 @@ function SignInForm() {
   return (
     <AdminShell
       title="Sign in"
-      description="Sign in with your Neon Auth account to manage nodes, routes, and events."
+      description="Sign in to manage your nodes, routes, and events."
     >
       <form className="mt-2 space-y-4" onSubmit={onSubmit}>
+        {searchParams.get('registered') === '1' ? (
+          <Alert>
+            <AlertDescription>Account created. Sign in to continue.</AlertDescription>
+          </Alert>
+        ) : null}
+
         <div className="space-y-2">
           <Label htmlFor="sign-in-email">Email</Label>
           <Input
@@ -109,7 +115,11 @@ function SignInForm() {
       </form>
 
       <p className="text-muted-foreground mt-6 text-sm">
-        Need an account? Create one through your Neon Auth configuration flow first.
+        Need an account?{' '}
+        <Link className="text-foreground underline underline-offset-4" href="/auth/sign-up">
+          Create one
+        </Link>
+        .
       </p>
 
       <div className="mt-6 flex items-center justify-between gap-2 text-sm">
