@@ -1,7 +1,7 @@
 import { createHmac } from 'node:crypto';
 import { WebSocket } from 'ws';
 
-interface RelayConfig {
+export interface RelayConfig {
   wsUrl: string;
   token: string;
   hermesWebhookUrl: string;
@@ -54,13 +54,15 @@ async function forwardToHermes(args: {
   return { ok: res.ok, status: res.status, responseBody };
 }
 
-async function httpPullAndForward(config: RelayConfig): Promise<void> {
+export async function httpPullAndForward(config: RelayConfig): Promise<void> {
   try {
     const pullRes = await fetch(config.httpFallback.pullUrl, {
-      method: 'GET',
+      method: 'POST',
       headers: {
         authorization: `Bearer ${config.token}`,
+        'content-type': 'application/json',
       },
+      body: JSON.stringify({ maxEvents: config.httpFallback.maxEvents }),
     });
 
     if (!pullRes.ok) {
@@ -68,7 +70,10 @@ async function httpPullAndForward(config: RelayConfig): Promise<void> {
       return;
     }
 
-    const events = (await pullRes.json()) as Array<{ id: string; body: string; contentType?: string }>;
+    const payload = (await pullRes.json()) as {
+      events?: Array<{ id: string; body: string; contentType?: string }>;
+    };
+    const events = payload.events;
     if (!Array.isArray(events) || events.length === 0) return;
 
     const ackedIds: string[] = [];
@@ -203,14 +208,22 @@ function startWebSocketRelay(config: RelayConfig): void {
     if (!connected) httpPullAndForward(config);
   }, config.httpFallback.intervalSeconds * 1000);
 
-  // Graceful shutdown
-  process.on('SIGINT', () => {
-    console.log('[relay] Shutting down...');
+  registerShutdown(() => {
     if (reconnectTimer) clearTimeout(reconnectTimer);
     if (httpFallbackTimer) clearInterval(httpFallbackTimer);
     ws?.close();
-    process.exit(0);
   });
+}
+
+/** systemd stops the service with SIGTERM; Ctrl-C sends SIGINT. Handle both. */
+export function registerShutdown(cleanup: () => void): void {
+  for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+    process.on(signal, () => {
+      console.log(`[relay] ${signal} received, shutting down...`);
+      cleanup();
+      process.exit(0);
+    });
+  }
 }
 
 async function main() {
@@ -221,7 +234,10 @@ async function main() {
   startWebSocketRelay(config);
 }
 
-main().catch((err) => {
-  console.error('[relay] Fatal error:', err);
-  process.exit(1);
-});
+// Only run when executed directly (`yarn relay`), not when imported by tests.
+if (process.argv[1] && /relay\.ts$/.test(process.argv[1])) {
+  main().catch((err) => {
+    console.error('[relay] Fatal error:', err);
+    process.exit(1);
+  });
+}
