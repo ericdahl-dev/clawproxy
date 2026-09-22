@@ -2,9 +2,11 @@ import crypto from 'node:crypto';
 import { createServer } from 'node:http';
 import next from 'next';
 import postgres from 'postgres';
-import { WebSocketServer, type WebSocket, type RawData } from 'ws';
+import { WebSocketServer, type WebSocket } from 'ws';
 
+import { markNodeSeen } from './app/lib/nodes/mark-seen';
 import { addConnection, removeConnection } from './app/lib/ws/connection-manager';
+import { createNodeSocketHandler } from './app/lib/ws/node-socket';
 import type { WsEventPayload } from './app/lib/ws/protocol';
 
 type AckResultRow = { id: string };
@@ -15,6 +17,8 @@ const port = parseInt(process.env.PORT ?? '3000', 10);
 
 const DEFAULT_LEASE_DURATION_SECONDS = 60;
 const AUTH_TIMEOUT_MS = 10_000;
+const PING_INTERVAL_MS = 30_000;
+const SEEN_THROTTLE_MS = 60_000;
 const WS_PATH = '/api/nodes/ws';
 
 function createDb() {
@@ -122,62 +126,17 @@ async function handleAck(ws: WebSocket, nodeId: string, eventIds: unknown): Prom
   ws.send(JSON.stringify({ type: 'ack_ok', acked: ackedIds.length, eventIds: ackedIds }));
 }
 
-function handleNodeWebSocket(ws: WebSocket): void {
-  let nodeId: string | null = null;
-  let authenticated = false;
-
-  const authTimeout = setTimeout(() => {
-    if (!authenticated) {
-      ws.close(4001, 'Authentication timeout');
-    }
-  }, AUTH_TIMEOUT_MS);
-
-  ws.on('message', async (raw: RawData) => {
-    let msg: Record<string, unknown>;
-    try {
-      msg = JSON.parse(raw.toString()) as Record<string, unknown>;
-    } catch {
-      ws.close(4000, 'Invalid JSON');
-      return;
-    }
-
-    if (!authenticated) {
-      if (msg.type !== 'auth' || typeof msg.token !== 'string') {
-        ws.send(JSON.stringify({ type: 'auth_error', error: 'Send auth message first' }));
-        return;
-      }
-      const node = await authenticateToken(msg.token);
-      if (!node) {
-        ws.send(JSON.stringify({ type: 'auth_error', error: 'Invalid or inactive node token' }));
-        ws.close(4001, 'Unauthorized');
-        return;
-      }
-      nodeId = node.id;
-      authenticated = true;
-      clearTimeout(authTimeout);
-      addConnection(nodeId, ws);
-      ws.send(JSON.stringify({ type: 'auth_ok', nodeId }));
-      pushPendingEventsForNode(ws, nodeId).catch((err: Error) => {
-        console.error('[ws] Failed to push pending events for node %s: %s', nodeId, err.message);
-      });
-      return;
-    }
-
-    if (msg.type === 'ack') {
-      await handleAck(ws, nodeId!, msg.eventIds);
-    }
-  });
-
-  ws.on('close', () => {
-    clearTimeout(authTimeout);
-    if (nodeId) removeConnection(nodeId);
-  });
-
-  ws.on('error', (err: Error) => {
-    console.error('[ws] WebSocket error for node %s: %s', nodeId, err.message);
-    if (nodeId) removeConnection(nodeId);
-  });
-}
+const handleNodeWebSocket = createNodeSocketHandler({
+  authenticateToken,
+  markSeen: (nodeId) => markNodeSeen(db, nodeId),
+  pushPendingEvents: pushPendingEventsForNode,
+  handleAck,
+  addConnection,
+  removeConnection,
+  authTimeoutMs: AUTH_TIMEOUT_MS,
+  pingIntervalMs: PING_INTERVAL_MS,
+  seenThrottleMs: SEEN_THROTTLE_MS,
+});
 
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
