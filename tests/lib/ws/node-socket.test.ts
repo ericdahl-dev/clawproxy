@@ -131,6 +131,45 @@ describe('createNodeSocketHandler', () => {
     expect(deps.markSeen).toHaveBeenCalledTimes(2);
   });
 
+  test('re-sends pending and lease-expired events on each keepalive tick', async () => {
+    const { deps, ws } = setup();
+    await authenticate(ws);
+    expect(deps.pushPendingEvents).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(PING_MS);
+    expect(deps.pushPendingEvents).toHaveBeenCalledTimes(2);
+    expect(deps.pushPendingEvents).toHaveBeenLastCalledWith(ws, 'node-1');
+
+    ws.emit('pong');
+    await vi.advanceTimersByTimeAsync(PING_MS);
+    expect(deps.pushPendingEvents).toHaveBeenCalledTimes(3);
+  });
+
+  test('does not re-send to a node that is being terminated', async () => {
+    const { deps, ws } = setup();
+    await authenticate(ws);
+
+    await vi.advanceTimersByTimeAsync(PING_MS);
+    const callsBefore = (deps.pushPendingEvents as ReturnType<typeof vi.fn>).mock.calls.length;
+    await vi.advanceTimersByTimeAsync(PING_MS); // no pong: this tick terminates
+    expect(ws.terminate).toHaveBeenCalledTimes(1);
+    expect(deps.pushPendingEvents).toHaveBeenCalledTimes(callsBefore);
+  });
+
+  test('a failed re-send is logged, not thrown', async () => {
+    const pushPendingEvents = vi.fn()
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error('db down'));
+    const { ws } = setup({ pushPendingEvents });
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await authenticate(ws);
+
+    await vi.advanceTimersByTimeAsync(PING_MS);
+
+    expect(errorSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+
   test('stops pinging and removes the connection on close', async () => {
     const { deps, ws } = setup();
     await authenticate(ws);
