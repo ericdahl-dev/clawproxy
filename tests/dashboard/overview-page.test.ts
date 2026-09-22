@@ -9,7 +9,7 @@ const mockRequireAdminUser = vi.hoisted(() => vi.fn());
  * getDailyEventCounts (another select). Call order is not guaranteed, so we use
  * one from() shape that supports every chain instead of mockReturnValueOnce.
  */
-const { mockDb, mockStatusGroupBy, mockDailyOrderBy, mockRecentLimit } = vi.hoisted(() => {
+const { mockDb, mockStatusGroupBy, mockDailyOrderBy, mockRecentLimit, mockNodeCount } = vi.hoisted(() => {
   const mockRecentLimit = vi.fn().mockResolvedValue([]);
   const mockRecentOrderBy = vi.fn().mockReturnValue({ limit: mockRecentLimit });
   const mockRecentWhere = vi.fn().mockReturnValue({ orderBy: mockRecentOrderBy });
@@ -21,7 +21,12 @@ const { mockDb, mockStatusGroupBy, mockDailyOrderBy, mockRecentLimit } = vi.hois
       orderBy: mockDailyOrderBy,
     }),
   );
-  const mockWhereGrouped = vi.fn().mockReturnValue({ groupBy: mockGroupBy });
+  // `.where()` serves two shapes: the grouped status query (`.groupBy()`) and the node-count
+  // query, which is awaited directly. Make it both a thenable and a chain.
+  const mockNodeCount = vi.fn().mockResolvedValue([{ count: 0 }]);
+  const mockWhereGrouped = vi.fn().mockImplementation(() =>
+    Object.assign(mockNodeCount(), { groupBy: mockGroupBy }),
+  );
 
   const mockFrom = vi.fn().mockImplementation(() => ({
     leftJoin: mockLeftJoin,
@@ -37,6 +42,7 @@ const { mockDb, mockStatusGroupBy, mockDailyOrderBy, mockRecentLimit } = vi.hois
     mockStatusGroupBy: mockGroupBy,
     mockDailyOrderBy,
     mockRecentLimit,
+    mockNodeCount,
   };
 });
 
@@ -69,15 +75,29 @@ describe('dashboard overview page', () => {
     mockDailyOrderBy.mockResolvedValue([]);
     mockRecentLimit.mockReset();
     mockRecentLimit.mockResolvedValue([]);
+    mockNodeCount.mockReset();
+    mockNodeCount.mockResolvedValue([{ count: 1 }]);
   });
 
-  test('renders overview heading and description', async () => {
+  test('renders overview heading and description for an account with a node', async () => {
     const element = await DashboardOverviewPage();
     const html = renderToStaticMarkup(element);
     const dom = new JSDOM(html);
 
     expect(dom.window.document.body.textContent).toContain('Overview');
     expect(dom.window.document.body.textContent).toContain('Welcome back');
+  });
+
+  test('an account with no nodes gets a first-run prompt instead of zeroed metrics', async () => {
+    mockNodeCount.mockResolvedValue([{ count: 0 }]);
+
+    const element = await DashboardOverviewPage();
+    const text = new JSDOM(renderToStaticMarkup(element)).window.document.body.textContent ?? '';
+
+    expect(text).toContain('Set up your first node');
+    expect(text).toContain('Create your first node');
+    expect(text).not.toContain('Welcome back');
+    expect(text).not.toContain('Success rate');
   });
 
   test('shows empty recent events when none are returned', async () => {

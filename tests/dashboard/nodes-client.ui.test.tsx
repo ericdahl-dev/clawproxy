@@ -76,7 +76,7 @@ describe('NodesClient', () => {
       method: 'DELETE',
       credentials: 'same-origin',
     });
-    expect(container.textContent).toContain('No nodes have been registered yet');
+    expect(container.textContent).toContain('No nodes yet');
   });
 
   test('keeps connect modal visible within the viewport', async () => {
@@ -106,7 +106,7 @@ describe('NodesClient', () => {
     });
 
     const modalTitle = Array.from(document.body.querySelectorAll('h3')).find(
-      (h) => h.textContent?.trim() === 'Connect your OpenClaw node',
+      (h) => h.textContent?.trim() === 'Connect your node',
     );
     expect(modalTitle).toBeTruthy();
 
@@ -173,13 +173,13 @@ describe('NodesClient', () => {
       connectButton!.click();
     });
 
-    expect(document.body.textContent).toContain('Connect your OpenClaw node');
+    expect(document.body.textContent).toContain('Connect your node');
 
     await act(async () => {
       document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     });
 
-    expect(document.body.textContent).not.toContain('Connect your OpenClaw node');
+    expect(document.body.textContent).not.toContain('Connect your node');
   });
 
   test('closes connect modal on backdrop click', async () => {
@@ -208,7 +208,7 @@ describe('NodesClient', () => {
       connectButton!.click();
     });
 
-    expect(document.body.textContent).toContain('Connect your OpenClaw node');
+    expect(document.body.textContent).toContain('Connect your node');
 
     const backdrop = document.body.querySelector('[data-testid="modal-backdrop"]');
     expect(backdrop).toBeTruthy();
@@ -217,10 +217,10 @@ describe('NodesClient', () => {
       backdrop!.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
     });
 
-    expect(document.body.textContent).not.toContain('Connect your OpenClaw node');
+    expect(document.body.textContent).not.toContain('Connect your node');
   });
 
-  test('shows OpenClaw prompt and reuses saved URL in connect modal', async () => {
+  test('shows the delivery-URL prompt and reuses the saved URL in the connect modal', async () => {
     const initialNodes = [
       {
         id: 'node-1',
@@ -237,7 +237,7 @@ describe('NodesClient', () => {
       root.render(createElement(NodesClient, { initialNodes }));
     });
 
-    expect(container.textContent).toContain('Connect your OpenClaw instance');
+    expect(container.textContent).toContain('Where should events be delivered?');
 
     const urlInput = container.querySelector('#openclaw-base-url') as HTMLInputElement | null;
     expect(urlInput).toBeTruthy();
@@ -276,7 +276,7 @@ describe('NodesClient', () => {
     const modalInput = document.body.querySelector('#openclaw-url') as HTMLInputElement | null;
     expect(modalInput).toBeTruthy();
     expect(modalInput?.value).toBe('http://openclaw-host:8080');
-    expect(document.body.textContent).toContain('One-paste OpenClaw setup block');
+    expect(document.body.textContent).toContain('Any other agent — protocol setup block');
     expect(document.body.textContent).toContain(
       'After successful forward, send websocket ack using connection.websocket.ack_message_template',
     );
@@ -304,5 +304,50 @@ describe('NodesClient', () => {
     const urlInput = container.querySelector('#openclaw-base-url') as HTMLInputElement | null;
     expect(urlInput).toBeTruthy();
     expect(urlInput?.value).toBe('http://127.0.0.1:18789');
+  });
+});
+
+describe('NodesClient onboarding', () => {
+  let container: HTMLElement;
+  let root: Root;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+    window.localStorage.clear();
+  });
+
+  afterEach(() => {
+    act(() => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  test('does not claim a delivery URL is saved when the user never saved one', async () => {
+    await act(async () => {
+      root.render(createElement(NodesClient, { initialNodes: [] }));
+    });
+
+    expect(container.textContent).not.toContain('Saved:');
+  });
+
+  test('shows the saved delivery URL once one is stored', async () => {
+    window.localStorage.setItem('nodes.openclawBaseUrl', 'http://127.0.0.1:9999');
+
+    await act(async () => {
+      root.render(createElement(NodesClient, { initialNodes: [] }));
+    });
+
+    expect(container.textContent).toContain('Saved: http://127.0.0.1:9999');
+  });
+
+  test('an account with no nodes gets a create prompt, not just an empty line', async () => {
+    await act(async () => {
+      root.render(createElement(NodesClient, { initialNodes: [] }));
+    });
+
+    expect(container.textContent).toMatch(/create your first node/i);
   });
 });

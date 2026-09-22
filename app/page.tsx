@@ -2,7 +2,7 @@ import { ArchitectureDiagram } from '@/components/app/architecture-diagram';
 import { Button } from '@/components/ui/button';
 
 const proofPoints = [
-  'Built for OpenClaw',
+  'Built for agents',
   'Durable delivery',
   'Private-node friendly',
   'ngrok alternative',
@@ -20,9 +20,9 @@ const comparisonPoints = [
       'Unlike tunnels that drop in-flight traffic when the process exits, clawproxy persists every event until it is acknowledged delivered.',
   },
   {
-    title: 'No vendor lock-in',
+    title: 'Free while in beta',
     description:
-      'No third-party relay in the webhook path, no usage-based pricing, and no rate limits imposed by a vendor.',
+      'clawproxy is free while in beta. It is open source, so you can also run the whole relay yourself.',
   },
 ];
 
@@ -40,7 +40,7 @@ const featureCards = [
   {
     title: 'Live WebSocket delivery',
     description:
-      'OpenClaw nodes can open a persistent WebSocket connection and receive events the instant they arrive — no polling delay. HTTP pull is always available as a fallback.',
+      'Your node opens a persistent WebSocket connection and receives events the instant they arrive — no polling delay. HTTP pull is always available as a fallback.',
   },
   {
     title: 'Built for operators',
@@ -63,7 +63,7 @@ const steps = [
   {
     title: 'Deliver in real-time or on demand',
     description:
-      'Your OpenClaw node receives events instantly over a persistent WebSocket connection, or falls back to authenticated HTTP polling — whichever fits your setup.',
+      'Your node receives events instantly over a persistent WebSocket connection, or falls back to authenticated HTTP polling — whichever fits your setup.',
   },
 ];
 
@@ -91,16 +91,17 @@ export default function Home() {
               clawproxy
             </p>
             <p className="text-muted-foreground mt-1 text-sm">
-              Public webhook ingress for private OpenClaw nodes
+              Public webhook ingress for private agent nodes — Hermes Agent, OpenClaw, or your
+              own client
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             <a
-              href="https://github.com/openclaw/openclaw"
+              href="https://github.com/ericdahl-dev/clawproxy-hermes"
               className="border-border text-foreground/85 hover:bg-muted/50 hidden rounded-full border px-4 py-2 text-sm transition sm:inline-flex"
             >
-              OpenClaw
+              Hermes Agent plugin
             </a>
             <Button
               asChild
@@ -124,7 +125,7 @@ export default function Home() {
 
             <p className="text-muted-foreground mt-6 max-w-2xl text-lg leading-8 sm:text-xl">
               Accept webhook traffic from the public internet, store it durably,
-              and deliver it to your OpenClaw node instantly over WebSocket — or
+              and deliver it to your private node instantly over WebSocket — or
               via authenticated outbound pull. No public node exposure required.
             </p>
 
@@ -281,7 +282,7 @@ export default function Home() {
             <p className="text-muted-foreground mt-4 max-w-xl text-base leading-7">
               clawproxy is deliberately focused: it receives inbound webhook
               traffic on the public internet and hands it off to private
-              OpenClaw nodes through authenticated outbound requests.
+              agent nodes through authenticated outbound requests.
             </p>
           </div>
 
@@ -339,7 +340,9 @@ export default function Home() {
                   size="lg"
                   className="rounded-full border-border px-6 py-3 text-sm font-semibold"
                 >
-                  <a href="https://github.com/openclaw/openclaw">Learn about OpenClaw</a>
+                  <a href="https://github.com/ericdahl-dev/clawproxy-hermes">
+                    Hermes Agent plugin
+                  </a>
                 </Button>
               </div>
             </div>

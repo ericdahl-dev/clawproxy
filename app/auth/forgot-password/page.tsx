@@ -48,7 +48,7 @@ export default function ForgotPasswordPage() {
   return (
     <AdminShell
       title="Reset password"
-      description="Enter your email address and Neon Auth will send password recovery instructions."
+      description="Enter your email address and we'll send password recovery instructions."
     >
       <form className="mt-2 space-y-4" onSubmit={onSubmit}>
         <div className="space-y-2">

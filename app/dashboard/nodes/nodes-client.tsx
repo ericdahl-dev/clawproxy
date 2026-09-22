@@ -6,6 +6,7 @@ import posthog from 'posthog-js';
 
 import { formatRelativeTime } from '@/app/lib/dashboard/datetime';
 import {
+  buildHermesSetup,
   buildOpenClawSetupBlock,
   getNodeHealth,
   type NodeHealth,
@@ -141,14 +142,28 @@ function ConnectGuide({
   const pullUrl = `${origin}/api/nodes/pull`;
   const ackUrl = `${origin}/api/nodes/ack`;
   const setupBlock = buildOpenClawSetupBlock(origin, token, forwardBaseUrl || undefined);
+  const hermesSetup = buildHermesSetup(origin, token);
 
   return (
     <>
-      <h3 className="text-lg font-semibold">Connect your OpenClaw node</h3>
+      <h3 className="text-lg font-semibold">Connect your node</h3>
       <p className="text-muted-foreground mt-1 text-sm">
-        Install this skill on your OpenClaw node. The skill will connect to clawproxy via WebSocket
-        for real-time event delivery, falling back to HTTP polling when needed.
+        Your node connects out to clawproxy over WebSocket for real-time delivery, falling back to
+        HTTP polling when needed. Hermes Agent has a plugin; any other agent can speak the protocol
+        below.
       </p>
+
+      <div className="border-border/70 bg-background/40 mt-4 rounded-xl border p-4">
+        <div className="mb-1.5 flex items-center justify-between">
+          <p className="text-xs font-medium">Hermes Agent — install the plugin</p>
+          <Button size="xs" variant="outline" onClick={() => onCopy(hermesSetup, 'hermes')}>
+            {copiedField === 'hermes' ? 'Copied' : 'Copy'}
+          </Button>
+        </div>
+        <pre className="text-muted-foreground overflow-x-auto text-[11px] leading-relaxed whitespace-pre-wrap">
+          {hermesSetup}
+        </pre>
+      </div>
 
       <div className="mt-5 space-y-4">
         <div>
@@ -214,7 +229,7 @@ function ConnectGuide({
 
         <div>
           <Label htmlFor="openclaw-url" className="mb-1.5 text-xs font-medium">
-            OpenClaw base URL{' '}
+            Delivery base URL{' '}
             <span className="text-muted-foreground font-normal">(optional)</span>
           </Label>
           <Input
@@ -225,7 +240,7 @@ function ConnectGuide({
             onChange={(e) => setForwardBaseUrl(e.target.value)}
           />
           <p className="text-muted-foreground mt-1 text-xs">
-            The base URL of your OpenClaw instance. Used to fill in the{' '}
+            Where your agent receives forwarded events. Used to fill in the{' '}
             <code className="bg-muted rounded px-1 py-0.5">forward.webhook_url</code> in the skill
             configuration below.
           </p>
@@ -233,7 +248,7 @@ function ConnectGuide({
 
         <div>
           <div className="mb-1.5 flex items-center justify-between">
-            <p className="text-xs font-medium">One-paste OpenClaw setup block</p>
+            <p className="text-xs font-medium">Any other agent — protocol setup block</p>
             <Button
               size="xs"
               variant="outline"
@@ -258,7 +273,7 @@ function ConnectGuide({
         The skill connects via WebSocket and receives events in real-time. Alternatively, it polls
         the pull endpoint with{' '}
         <code className="bg-muted rounded px-1 py-0.5">Authorization: Bearer &lt;token&gt;</code>.
-        Each event&apos;s original headers and body are forwarded to your OpenClaw webhook system
+        Each event&apos;s original headers and body are forwarded to your agent&apos;s webhook
         using the <code className="bg-muted rounded px-1 py-0.5">forward.webhook_url</code>{' '}
         (replacing <code className="bg-muted rounded px-1 py-0.5">{'{routeSlug}'}</code> with the
         event&apos;s route slug), then delivery is acknowledged via the ack endpoint.
@@ -278,6 +293,7 @@ export function NodesClient({ initialNodes }: Props) {
   const [nodeList, setNodeList] = useState<NodeRow[]>(initialNodes);
   const [openClawBaseUrl, setOpenClawBaseUrl] = useState(DEFAULT_OPENCLAW_BASE_URL);
   const [openClawInput, setOpenClawInput] = useState(DEFAULT_OPENCLAW_BASE_URL);
+  const [savedBaseUrl, setSavedBaseUrl] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [nameInput, setNameInput] = useState('');
   const [slugInput, setSlugInput] = useState('');
@@ -410,12 +426,14 @@ export function NodesClient({ initialNodes }: Props) {
     }
     setOpenClawBaseUrl(savedUrl);
     setOpenClawInput(savedUrl);
+    setSavedBaseUrl(savedUrl);
   }, [OPENCLAW_URL_STORAGE_KEY]);
 
   function handleSaveOpenClawBaseUrl() {
     const normalized = openClawInput.trim();
     window.localStorage.setItem(OPENCLAW_URL_STORAGE_KEY, normalized);
     setOpenClawBaseUrl(normalized);
+    setSavedBaseUrl(normalized);
   }
 
   return (
@@ -431,9 +449,10 @@ export function NodesClient({ initialNodes }: Props) {
 
       <Card size="sm" className="border-border/70 bg-background/40 ring-0">
         <CardHeader>
-          <CardTitle>Connect your OpenClaw instance</CardTitle>
+          <CardTitle>Where should events be delivered?</CardTitle>
           <CardDescription>
-            Save your OpenClaw base URL once and reuse it in node connect instructions.
+            Save your agent&apos;s base URL once and reuse it in every node&apos;s connect
+            instructions.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -451,8 +470,8 @@ export function NodesClient({ initialNodes }: Props) {
               Save URL
             </Button>
           </div>
-          {openClawBaseUrl && (
-            <p className="text-muted-foreground mt-2 text-xs">Saved: {openClawBaseUrl}</p>
+          {savedBaseUrl && (
+            <p className="text-muted-foreground mt-2 text-xs">Saved: {savedBaseUrl}</p>
           )}
         </CardContent>
       </Card>
@@ -507,8 +526,16 @@ export function NodesClient({ initialNodes }: Props) {
       )}
 
       {nodeList.length === 0 ? (
-        <div className="border-border/70 bg-background/40 rounded-2xl border p-5">
-          <p className="text-muted-foreground text-sm">No nodes have been registered yet.</p>
+        <div className="border-border/70 bg-background/40 space-y-3 rounded-2xl border p-5">
+          <p className="text-muted-foreground text-sm">
+            No nodes yet. A node is the agent that receives your webhooks — Hermes Agent, OpenClaw,
+            or your own client.
+          </p>
+          {!showCreateForm && (
+            <Button size="sm" onClick={() => setShowCreateForm(true)}>
+              Create your first node
+            </Button>
+          )}
         </div>
       ) : (
         <div className="border-border/70 bg-background/40 overflow-hidden rounded-2xl border">

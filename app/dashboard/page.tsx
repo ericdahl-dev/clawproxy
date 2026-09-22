@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { count, desc, eq } from 'drizzle-orm';
+import Link from 'next/link';
 
 import { requireAdminUser } from '@/app/lib/auth/require-admin';
 import {
@@ -10,6 +11,8 @@ import {
 import { decrypt } from '@/app/lib/crypto/encryption';
 import { db } from '@/app/lib/db/client';
 import { events, nodes } from '@/db/schema';
+import { overviewIntro } from '@/app/lib/dashboard/overview-intro';
+import { Button } from '@/components/ui/button';
 import { DashboardEventsChart } from '@/components/app/dashboard-events-chart';
 import { DashboardMetricCards } from '@/components/app/dashboard-metric-cards';
 import { DashboardPageHeader } from '@/components/app/dashboard-page-header';
@@ -22,7 +25,7 @@ export const dynamic = 'force-dynamic';
 export default async function DashboardPage() {
   const user = await requireAdminUser();
 
-  const [countsByStatus, dailySeries, recentList] = await Promise.all([
+  const [countsByStatus, dailySeries, recentList, nodeCountRows] = await Promise.all([
     db
       .select({
         status: events.status,
@@ -45,7 +48,10 @@ export default async function DashboardPage() {
       .where(eq(events.userId, user.id))
       .orderBy(desc(events.receivedAt))
       .limit(10),
+    db.select({ count: count() }).from(nodes).where(eq(nodes.userId, user.id)),
   ]);
+
+  const intro = overviewIntro(Number(nodeCountRows[0]?.count ?? 0));
 
   const totals = countsByStatus.reduce<Record<string, number>>((acc, row) => {
     acc[row.status] = Number(row.count);
@@ -70,23 +76,27 @@ export default async function DashboardPage() {
 
   return (
     <section className="space-y-8">
-      <DashboardPageHeader
-        eyebrow="Overview"
-        title="Welcome back"
-        description="Use the dashboard navigation to manage nodes, routes, and events for your public ingress and Hermes Agent / OpenClaw delivery pipeline."
-      />
+      <DashboardPageHeader eyebrow="Overview" title={intro.title} description={intro.description} />
+
+      {intro.cta ? (
+        <Button asChild size="lg" className="w-fit rounded-full px-5">
+          <Link href={intro.cta.href}>{intro.cta.label}</Link>
+        </Button>
+      ) : null}
 
       <DashboardRelaySummary />
 
-      <DashboardMetricCards
-        total={total}
-        successRate={successRate}
-        delivered={delivered}
-        failed={failed}
-        pending={pending}
-        leased={leased}
-        expired={expired}
-      />
+      {intro.showMetrics ? (
+        <DashboardMetricCards
+          total={total}
+          successRate={successRate}
+          delivered={delivered}
+          failed={failed}
+          pending={pending}
+          leased={leased}
+          expired={expired}
+        />
+      ) : null}
 
       <div className="flex min-w-0 flex-col gap-6">
         <Card size="sm" className="min-w-0">

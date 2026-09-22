@@ -11,6 +11,7 @@ description: Pulls and delivers webhook events from clawproxy
 connection:
   ws_url: "${wsOrigin}/api/nodes/ws"
   pull_url: "${origin}/api/nodes/pull"
+  pull_method: "POST"
   ack_url: "${origin}/api/nodes/ack"
   token: "${tokenValue}"
 
@@ -46,6 +47,7 @@ connection:
   http_fallback:
     enabled: true
     pull_url: "${origin}/api/nodes/pull"
+    pull_method: "POST"
     ack_url: "${origin}/api/nodes/ack"
     auth_header: "Authorization: Bearer ${tokenValue}"
     poll_interval_seconds: 30
@@ -79,4 +81,23 @@ export function getNodeHealth(
   if (ms < 5 * 60 * 1000) return 'active';
   if (ms < 60 * 60 * 1000) return 'stale';
   return 'offline';
+}
+
+/**
+ * Setup for Hermes Agent, which has a first-party plugin: it holds this node's connection inside
+ * the gateway and hands each event to the Hermes webhook route of the same name.
+ */
+export function buildHermesSetup(origin: string, token?: string): string {
+  const tokenValue = token ?? 'YOUR_NODE_TOKEN_HERE';
+  return `# 1. Install the plugin on the machine running Hermes Agent
+hermes plugins install ericdahl-dev/clawproxy-hermes
+
+# 2. Add these to ~/.hermes/.env (or your profile's .env)
+CLAWPROXY_NODE_TOKEN=${tokenValue}
+CLAWPROXY_HERMES_WEBHOOK_SECRET=<platforms.webhook.extra.secret from ~/.hermes/config.yaml>
+${origin === 'https://clawproxy.io' ? '' : `CLAWPROXY_SERVER_URL=${origin}\n`}
+# 3. Restart the gateway, then check: hermes gateway status
+
+# Route names must match: a clawproxy route named "github-prs" is delivered to the Hermes
+# webhook route with the same name, so create that route in Hermes first.`;
 }

@@ -74,9 +74,13 @@ describe('SignUpPage', () => {
     expect(hrefs).toContain('/');
   });
 
-  test('shows success and navigates to sign-in after delay on successful sign-up', async () => {
+  test('signs in and navigates to the dashboard on successful sign-up', async () => {
     const signUpEmail = vi.fn().mockResolvedValue({});
-    createNeonClientAuthMock.mockResolvedValue({ signUp: { email: signUpEmail } });
+    const signInEmail = vi.fn().mockResolvedValue({});
+    createNeonClientAuthMock.mockResolvedValue({
+      signUp: { email: signUpEmail },
+      signIn: { email: signInEmail },
+    });
 
     const { default: SignUpPage } = await import('@/app/auth/sign-up/page');
 
@@ -99,19 +103,18 @@ describe('SignUpPage', () => {
       password: 'pw',
       name: 'Ada',
     });
-    expect(container.textContent).toContain('Account created');
-
-    await act(async () => {
-      vi.advanceTimersByTime(800);
-    });
-
-    expect(pushMock).toHaveBeenCalledWith('/auth/sign-in');
+    // Bouncing a new account to the sign-in form read as failure; sign it in instead.
+    expect(signInEmail).toHaveBeenCalledWith({ email: 'ada@e.com', password: 'pw' });
+    expect(pushMock).toHaveBeenCalledWith('/dashboard');
     expect(refreshMock).toHaveBeenCalled();
   });
 
   test('uses email as name when name is blank', async () => {
     const signUpEmail = vi.fn().mockResolvedValue({});
-    createNeonClientAuthMock.mockResolvedValue({ signUp: { email: signUpEmail } });
+    createNeonClientAuthMock.mockResolvedValue({
+      signUp: { email: signUpEmail },
+      signIn: { email: vi.fn().mockResolvedValue({}) },
+    });
 
     const { default: SignUpPage } = await import('@/app/auth/sign-up/page');
 
@@ -137,7 +140,10 @@ describe('SignUpPage', () => {
 
   test('shows API error when signUp returns error', async () => {
     const signUpEmail = vi.fn().mockResolvedValue({ error: { message: 'Email taken' } });
-    createNeonClientAuthMock.mockResolvedValue({ signUp: { email: signUpEmail } });
+    createNeonClientAuthMock.mockResolvedValue({
+      signUp: { email: signUpEmail },
+      signIn: { email: vi.fn().mockResolvedValue({}) },
+    });
 
     const { default: SignUpPage } = await import('@/app/auth/sign-up/page');
 
@@ -160,7 +166,10 @@ describe('SignUpPage', () => {
 
   test('shows message when signUp throws', async () => {
     const signUpEmail = vi.fn().mockRejectedValue(new Error('boom'));
-    createNeonClientAuthMock.mockResolvedValue({ signUp: { email: signUpEmail } });
+    createNeonClientAuthMock.mockResolvedValue({
+      signUp: { email: signUpEmail },
+      signIn: { email: vi.fn().mockResolvedValue({}) },
+    });
 
     const { default: SignUpPage } = await import('@/app/auth/sign-up/page');
 

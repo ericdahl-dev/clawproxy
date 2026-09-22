@@ -89,3 +89,29 @@ describe('getNodeHealth', () => {
     expect(getNodeHealth(last, now)).toBe('offline');
   });
 });
+
+describe('agent-agnostic connect instructions', () => {
+  test('buildHermesSetup gives the plugin install command and both env vars', async () => {
+    const { buildHermesSetup } = await import('@/app/lib/dashboard/node-connect');
+    const setup = buildHermesSetup('https://relay.example', 'cpn_token');
+
+    expect(setup).toContain('hermes plugins install ericdahl-dev/clawproxy-hermes');
+    expect(setup).toContain('CLAWPROXY_NODE_TOKEN=cpn_token');
+    expect(setup).toContain('CLAWPROXY_HERMES_WEBHOOK_SECRET=');
+  });
+
+  test('buildHermesSetup states the route-name rule', async () => {
+    const { buildHermesSetup } = await import('@/app/lib/dashboard/node-connect');
+    expect(await Promise.resolve(buildHermesSetup('https://relay.example'))).toMatch(
+      /same name|match/i,
+    );
+  });
+
+  test('the protocol block documents that pull is a POST', async () => {
+    const { buildOpenClawSetupBlock, buildSkillYaml } = await import(
+      '@/app/lib/dashboard/node-connect'
+    );
+    expect(buildOpenClawSetupBlock('https://relay.example')).toContain('pull_method: "POST"');
+    expect(buildSkillYaml('https://relay.example')).toContain('pull_method: "POST"');
+  });
+});

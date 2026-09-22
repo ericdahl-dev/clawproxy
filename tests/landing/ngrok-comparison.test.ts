@@ -32,7 +32,9 @@ describe('landing page ngrok/Cloudflare Tunnels comparison section', () => {
 
     expect(html).toContain('No tunnel dependency');
     expect(html).toContain('Events survive restarts');
-    expect(html).toContain('No vendor lock-in');
+    // Was 'No vendor lock-in', which claimed no third-party relay in the webhook path —
+    // untrue of hosted clawproxy, which is exactly that.
+    expect(html).toContain('Free while in beta');
   });
 
   test('proof points include ngrok alternative badge', async () => {

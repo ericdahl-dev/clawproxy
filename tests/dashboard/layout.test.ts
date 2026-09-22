@@ -81,7 +81,8 @@ describe('dashboard layout', () => {
       'Events',
     );
     expect(document.body.textContent).toContain('admin@example.com');
-    expect(document.body.textContent).toContain('Admin');
+    // The sidebar used to label every user "Admin"; there are no roles in the product.
+    expect(document.body.textContent).not.toContain('Admin');
     expect(document.body.textContent).toContain('clawproxy');
     expect(document.body.textContent).toContain('Dashboard content');
   });

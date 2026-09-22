@@ -19,7 +19,7 @@ type AdminShellProps = {
 };
 
 export function AdminShell({
-  eyebrow = 'clawproxy admin',
+  eyebrow = 'clawproxy',
   title,
   description,
   maxWidthClass = 'max-w-md',
