@@ -1,4 +1,4 @@
-import { ArrowRightLeft, RadioTower, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowRightLeft, RadioTower, ShieldCheck } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -22,15 +22,17 @@ const summaryItems = [
 
 export function DashboardRelaySummary() {
   return (
-    <Card size="sm" className="overflow-hidden border-brand-accent/20 bg-gradient-to-br from-brand-accent/10 via-background to-background">
+    <Card
+      size="sm"
+      className="overflow-hidden border-brand-accent/25 bg-brand-accent/10 shadow-2xl shadow-black/25"
+    >
       <CardContent className="p-0">
         <div className="grid gap-0 lg:grid-cols-[1.35fr_0.95fr]">
           <div className="p-5 md:p-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-brand-accent/20 bg-brand-accent/10 px-3 py-1 text-xs font-medium text-brand-accent">
-              <Sparkles className="size-3.5" aria-hidden />
+            <div className="inline-flex items-center rounded-full border border-brand-accent/30 bg-brand-accent/10 px-3 py-1 font-mono text-xs font-medium text-brand-accent">
               Live relay console
             </div>
-            <h3 className="mt-4 max-w-2xl text-2xl font-semibold tracking-tight">
+            <h3 className="mt-5 max-w-2xl text-3xl font-semibold tracking-[-0.04em]">
               Public webhooks on one side, Hermes Agent and OpenClaw on the other.
             </h3>
             <p className="text-muted-foreground mt-3 max-w-2xl text-sm leading-6">
@@ -38,22 +40,22 @@ export function DashboardRelaySummary() {
               reachable, and failed deliveries can be pushed back into motion quickly.
             </p>
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
-              <span className="border-border/70 bg-background/80 rounded-full border px-3 py-1 font-medium">
+              <span className="border-border/70 bg-background/45 rounded-full border px-3 py-1 font-medium">
                 Secure ingress
               </span>
-              <span className="border-border/70 bg-background/80 rounded-full border px-3 py-1 font-medium">
+              <span className="border-border/70 bg-background/45 rounded-full border px-3 py-1 font-medium">
                 Lease + ack delivery
               </span>
-              <span className="border-border/70 bg-background/80 rounded-full border px-3 py-1 font-medium">
+              <span className="border-border/70 bg-background/45 rounded-full border px-3 py-1 font-medium">
                 WebSocket first
               </span>
-              <span className="border-border/70 bg-background/80 rounded-full border px-3 py-1 font-medium">
+              <span className="border-border/70 bg-background/45 rounded-full border px-3 py-1 font-medium">
                 HTTP fallback
               </span>
             </div>
           </div>
 
-          <div className="border-border/60 bg-background/70 border-t p-5 md:p-6 lg:border-t-0 lg:border-l">
+          <div className="border-border/70 bg-background/35 border-t p-5 md:p-6 lg:border-t-0 lg:border-l">
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
               {summaryItems.map((item) => {
                 const Icon = item.icon;
@@ -61,10 +63,10 @@ export function DashboardRelaySummary() {
                 return (
                   <div
                     key={item.title}
-                    className="border-border/60 bg-card/70 rounded-2xl border p-3 shadow-sm"
+                    className="rounded-3xl border border-border/70 bg-card/55 p-4 shadow-lg shadow-black/10"
                   >
                     <div className="flex items-start gap-3">
-                      <div className="bg-brand-accent/10 text-brand-accent flex size-8 shrink-0 items-center justify-center rounded-xl border border-brand-accent/15">
+                      <div className="flex size-9 shrink-0 items-center justify-center rounded-2xl border border-brand-accent/25 bg-brand-accent/10 text-brand-accent">
                         <Icon className="size-4" aria-hidden />
                       </div>
                       <div>

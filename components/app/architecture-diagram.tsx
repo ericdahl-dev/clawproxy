@@ -13,10 +13,10 @@ function NodeBox({
 }) {
   return (
     <div
-      className={`flex flex-1 flex-col rounded-2xl border p-5 ${
+      className={`flex flex-1 flex-col rounded-3xl border p-5 ${
         accent
-          ? 'border-brand-accent/35 bg-card/50 ring-1 ring-brand-accent/15'
-          : 'border-border bg-card/40'
+          ? 'border-brand-accent/35 bg-card/55 ring-1 ring-brand-accent/15'
+          : 'border-border bg-card/35'
       }`}
     >
       <div className="mb-4 flex items-start justify-between gap-2">
@@ -29,7 +29,7 @@ function NodeBox({
           <p className="mt-1 text-xs text-muted-foreground">{sublabel}</p>
         </div>
         {badge && (
-          <span className="shrink-0 rounded-full border border-border bg-muted/40 px-2.5 py-1 text-[10px] font-medium text-muted-foreground">
+          <span className="shrink-0 rounded-full border border-brand-accent/30 bg-brand-accent/10 px-2.5 py-1 font-mono text-[10px] font-medium text-brand-accent">
             {badge}
           </span>
         )}
@@ -38,7 +38,7 @@ function NodeBox({
         {items.map((item) => (
           <li
             key={item}
-            className="border-border bg-card/60 flex items-center gap-2 rounded-xl border px-3 py-2 text-sm"
+            className="border-border bg-background/35 flex items-center gap-2 rounded-2xl border px-3 py-2 text-sm"
           >
             {item}
           </li>
@@ -132,16 +132,16 @@ function ArrowDown({ label }: { label: string }) {
 export function ArchitectureDiagram() {
   return (
     <div
-      className="border-border bg-card/20 rounded-[2rem] border p-6 backdrop-blur md:p-8"
+      className="border-border bg-card/35 rounded-[2rem] border p-6 backdrop-blur md:p-8"
       role="img"
-      aria-label="Architecture diagram: webhook providers send events to clawproxy, which queues them for secure outbound delivery to a private OpenClaw node"
+      aria-label="Architecture diagram: webhook providers send events to clawproxy, which queues them for secure outbound delivery to a private node"
     >
       <div className="mb-6">
-        <p className="text-brand-accent text-xs font-semibold tracking-[0.32em] uppercase">
+        <p className="text-brand-accent font-mono text-xs font-semibold tracking-[0.2em] uppercase">
           System overview
         </p>
         <p className="text-muted-foreground mt-1 text-sm">
-          Webhook events travel from the public internet to your private node — without exposing a single port.
+          Webhook events travel from the public internet to your private node without exposing a single port.
         </p>
       </div>
 
@@ -169,12 +169,12 @@ export function ArchitectureDiagram() {
           label="OpenClaw node"
           sublabel="Your private network"
           items={['Polls for new events', 'Processes locally', 'Acknowledges delivery']}
-          badge="🔒 Never exposed"
+          badge="Never exposed"
         />
       </div>
 
       <p className="text-muted-foreground mt-5 text-center text-xs">
-        Your node always initiates the connection outbound — no open ports or firewall rules required.
+        Your node always initiates the connection outbound. No open ports or firewall rules required.
       </p>
     </div>
   );

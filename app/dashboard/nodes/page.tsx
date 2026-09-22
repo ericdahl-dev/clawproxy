@@ -30,11 +30,11 @@ export default async function DashboardNodesPage() {
     .orderBy(desc(nodes.createdAt));
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-8">
       <DashboardPageHeader
         eyebrow="Nodes"
         title="Connected nodes"
-        description="Register and monitor private OpenClaw nodes that pull events from the queue."
+        description="Register and monitor private nodes that receive events from the queue."
       />
 
       <NodesClient

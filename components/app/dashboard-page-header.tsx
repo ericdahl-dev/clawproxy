@@ -6,12 +6,14 @@ type Props = {
 
 export function DashboardPageHeader({ eyebrow, title, description }: Props) {
   return (
-    <div>
-      <p className="text-brand-accent text-sm font-semibold tracking-[0.32em] uppercase">
+    <div className="rounded-[2rem] border border-border/80 bg-card/35 p-6 shadow-xl shadow-black/15 backdrop-blur md:p-7">
+      <p className="font-mono text-xs font-semibold tracking-[0.18em] text-brand-accent uppercase">
         {eyebrow}
       </p>
-      <h2 className="mt-3 text-3xl font-semibold">{title}</h2>
-      <p className="text-muted-foreground mt-3 max-w-2xl text-base leading-7">{description}</p>
+      <h2 className="mt-4 max-w-4xl text-4xl font-semibold tracking-[-0.045em] text-balance sm:text-5xl">
+        {title}
+      </h2>
+      <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">{description}</p>
     </div>
   );
 }

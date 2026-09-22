@@ -20,13 +20,18 @@ type Props = {
 
 export function DashboardRecentEvents({ events: rows }: Props) {
   return (
-    <Card size="sm">
+    <Card size="sm" className="bg-card/55">
       <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2 space-y-0">
         <div>
           <CardTitle className="text-base">Recent events</CardTitle>
           <CardDescription>Latest webhook deliveries across your nodes.</CardDescription>
         </div>
-        <Button variant="outline" size="sm" asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          asChild
+          className="rounded-full border-border/80 bg-background/30 px-4"
+        >
           <Link href="/dashboard/events">View all</Link>
         </Button>
       </CardHeader>
@@ -39,7 +44,7 @@ export function DashboardRecentEvents({ events: rows }: Props) {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-border/50 bg-muted/30 border-y">
+                <tr className="border-border/60 bg-background/35 border-y">
                   <th className="text-muted-foreground px-4 py-2 text-left text-xs font-medium">
                     Status
                   </th>
@@ -61,10 +66,10 @@ export function DashboardRecentEvents({ events: rows }: Props) {
                       <EventStatusBadge status={event.status} />
                     </td>
                     <td className="max-w-[140px] truncate px-4 py-2.5 font-medium">
-                      {event.nodeName ?? '—'}
+                      {event.nodeName ?? 'None'}
                     </td>
                     <td className="text-muted-foreground max-w-[120px] truncate px-4 py-2.5 font-mono text-xs">
-                      {event.contentType ?? '—'}
+                      {event.contentType ?? 'None'}
                     </td>
                     <td className="text-muted-foreground px-4 py-2.5 text-right tabular-nums">
                       {formatRelativeTime(event.receivedAt)}
