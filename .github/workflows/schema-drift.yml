@@ -1,0 +1,46 @@
+name: Schema drift
+
+# Migrations are applied by hand (the Neon PR workflow is disabled), so a merged migration can
+# silently never reach production — that happened with 0002 for six months. This rebuilds the
+# schema from the committed migrations and compares it to production, read-only.
+
+on:
+  schedule:
+    - cron: '0 13 * * 1' # Mondays 13:00 UTC
+  push:
+    branches: [master]
+    paths:
+      - 'db/**'
+      - 'scripts/schema-drift/**'
+      - '.github/workflows/schema-drift.yml'
+  workflow_dispatch:
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: yarn
+      - run: corepack enable
+      - run: yarn install --immutable
+      - name: Build the expected schema from committed migrations
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+        run: yarn db:migrate
+      - name: Compare production against it
+        env:
+          EXPECTED_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+          DRIFT_CHECK_DATABASE_URL: ${{ secrets.DRIFT_CHECK_DATABASE_URL }}
+        run: yarn db:drift
