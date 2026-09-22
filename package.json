@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:ws": "tsx server.ts",
+    "relay": "tsx relay.ts",
     "build": "next build && node_modules/.bin/esbuild server.ts --bundle --platform=node --target=node22 --format=cjs --external:next --outfile=.next/standalone/server.js",
     "start": "next start",
     "lint": "eslint",
