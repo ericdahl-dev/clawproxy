@@ -33,6 +33,16 @@ export function createNodeSocketHandler(deps: NodeSocketDeps): (ws: WebSocket) =
       });
     }
 
+    /** Push pending and lease-expired events. Runs at auth and on every keepalive tick, so a
+     * delivery the node didn't ack is retried without waiting for a reconnect. */
+    function pushPending(): void {
+      if (!nodeId) return;
+      const id = nodeId;
+      deps.pushPendingEvents(ws, id).catch((err: Error) => {
+        console.error('[ws] Failed to push pending events for node %s: %s', id, err.message);
+      });
+    }
+
     function stopPinging(): void {
       if (pingTimer) clearInterval(pingTimer);
       pingTimer = null;
@@ -84,12 +94,10 @@ export function createNodeSocketHandler(deps: NodeSocketDeps): (ws: WebSocket) =
           }
           alive = false;
           ws.ping();
+          pushPending();
         }, deps.pingIntervalMs);
 
-        const id = nodeId;
-        deps.pushPendingEvents(ws, id).catch((err: Error) => {
-          console.error('[ws] Failed to push pending events for node %s: %s', id, err.message);
-        });
+        pushPending();
         return;
       }
 
