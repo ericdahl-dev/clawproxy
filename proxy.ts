@@ -1,14 +1,20 @@
-import { auth } from '@/app/lib/auth/server';
+import { NextRequest, NextResponse } from 'next/server';
+
+import { SESSION_COOKIE_NAME } from '@/app/lib/auth/constants';
 
 /**
- * Match dashboard navigations only — not /api/admin. For POST/DELETE to admin APIs,
- * Neon Auth's middleware forwards the incoming method/body to upstream get-session when
- * the fast cookie-cache path does not apply (GET-only), which breaks JSON APIs and can
- * yield HTML responses. Admin routes use requireAdminUser() instead.
+ * Keep middleware edge-safe: only require that a session cookie exists before dashboard
+ * navigation. The dashboard layout validates the session against Postgres at runtime.
  */
-export default auth.middleware({
-  loginUrl: '/auth/sign-in',
-});
+export default function proxy(request: NextRequest) {
+  const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  if (token) return NextResponse.next();
+
+  const loginUrl = new URL('/auth/sign-in', request.url);
+  const next = `${request.nextUrl.pathname}${request.nextUrl.search}`;
+  if (next !== '/dashboard') loginUrl.searchParams.set('next', next);
+  return NextResponse.redirect(loginUrl);
+}
 
 export const config = {
   matcher: ['/dashboard/:path*'],

@@ -6,7 +6,7 @@
 
 clawproxy is a **public webhook relay for private OpenClaw nodes**. The core engine works:
 
-- ✅ **Auth:** Neon Auth for human admins, hashed bearer tokens for machine nodes
+- ✅ **Auth:** App-owned email/password auth in Postgres, hashed bearer tokens for machine nodes
 - ✅ **Database:** Postgres schema with nodes, routes, events (Drizzle ORM)
 - ✅ **Ingress:** `POST /api/ingress/:routeSlug` accepts and persists webhooks
 - ✅ **Delivery:** Pull-based polling with lease/ack, retry on expiry, TTL enforcement

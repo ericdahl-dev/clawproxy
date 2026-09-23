@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
 import posthog from 'posthog-js';
 
-import { createNeonClientAuth } from '@/app/lib/auth/client';
+import { createClientAuth } from '@/app/lib/auth/client';
 import { useRedirect127ToLocalhost } from '@/app/lib/auth/dev-origin';
 import { AdminShell } from '@/components/app/admin-shell';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -32,7 +32,7 @@ export default function SignUpPage() {
     setSuccess(null);
 
     try {
-      const auth = await createNeonClientAuth();
+      const auth = await createClientAuth();
       const result = await auth.signUp.email({
         email,
         password,
@@ -45,15 +45,6 @@ export default function SignUpPage() {
 
       posthog.identify(email, { email, name: name.trim() || email });
       posthog.capture('user_signed_up', { email, name: name.trim() || email });
-
-      // Sign the new account straight in: bouncing to the sign-in form made a successful
-      // sign-up look like a failure. If that doesn't work, say so on the sign-in page.
-      const signedIn = await auth.signIn.email({ email, password });
-      if (signedIn?.error) {
-        router.push('/auth/sign-in?registered=1');
-        router.refresh();
-        return;
-      }
 
       setSuccess('Account created. Taking you to your dashboard…');
       router.push('/dashboard');

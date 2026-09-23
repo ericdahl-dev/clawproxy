@@ -1,57 +1,180 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-const getSpy = vi.hoisted(() => vi.fn());
-const postSpy = vi.hoisted(() => vi.fn());
-
-vi.mock('@/app/lib/auth/server', () => ({
-  auth: {
-    handler: vi.fn(() => ({
-      GET: getSpy,
-      POST: postSpy,
-    })),
-  },
+const service = vi.hoisted(() => ({
+  signInWithPassword: vi.fn(),
+  signUpWithPassword: vi.fn(),
+  signOutSession: vi.fn(),
+  requestPasswordReset: vi.fn(),
 }));
 
-import { GET as rootGet, POST as rootPost } from '@/app/api/auth/route';
-import { GET as catchAllGet, POST as catchAllPost } from '@/app/api/auth/[...path]/route';
+const rateLimit = vi.hoisted(() => ({
+  checkAuthRateLimit: vi.fn(),
+  recordAuthRateLimitAttempt: vi.fn(),
+  clearAuthRateLimit: vi.fn(),
+}));
 
-describe('GET/POST /api/auth', () => {
+vi.mock('@/app/lib/auth/server', () => service);
+vi.mock('@/app/lib/auth/rate-limit', () => rateLimit);
+
+import { POST as forgotPassword } from '@/app/api/auth/forgot-password/route';
+import { POST as signIn } from '@/app/api/auth/sign-in/route';
+import { POST as signOut } from '@/app/api/auth/sign-out/route';
+import { POST as signUp } from '@/app/api/auth/sign-up/route';
+
+function jsonRequest(
+  path: string,
+  body: Record<string, unknown>,
+  extraHeaders: Record<string, string> = {}
+) {
+  return new Request(`http://localhost${path}`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', ...extraHeaders },
+    body: JSON.stringify(body),
+  });
+}
+
+describe('first-party auth API routes', () => {
   beforeEach(() => {
-    getSpy.mockReset();
-    postSpy.mockReset();
-    getSpy.mockResolvedValue(new Response('ok-get', { status: 200 }));
-    postSpy.mockResolvedValue(new Response('ok-post', { status: 200 }));
+    vi.clearAllMocks();
+    rateLimit.checkAuthRateLimit.mockResolvedValue({ limited: false, retryAfterSeconds: 0 });
+    rateLimit.recordAuthRateLimitAttempt.mockResolvedValue(undefined);
+    rateLimit.clearAuthRateLimit.mockResolvedValue(undefined);
   });
 
-  test('root route delegates to handler.GET with empty path params', async () => {
-    const req = new Request('http://localhost/api/auth');
-    const res = await rootGet(req);
+  test('sign-in creates an httpOnly session cookie on success', async () => {
+    service.signInWithPassword.mockResolvedValue({
+      ok: true,
+      token: 'session-token',
+      expiresAt: new Date('2030-01-01T00:00:00Z'),
+      user: { id: 'user-1', email: 'user@example.com', name: 'User' },
+    });
 
-    expect(getSpy).toHaveBeenCalledTimes(1);
-    const [request, ctx] = getSpy.mock.calls[0]!;
-    expect(request).toBe(req);
-    expect(await ctx.params).toEqual({ path: [] });
-    expect(res.status).toBe(200);
-    expect(await res.text()).toBe('ok-get');
+    const response = await signIn(jsonRequest('/api/auth/sign-in', {
+      email: 'USER@example.com',
+      password: 'secret123',
+    }));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({ ok: true, data: { user: { id: 'user-1' } } });
+    expect(service.signInWithPassword).toHaveBeenCalledWith('USER@example.com', 'secret123');
+    expect(response.headers.get('set-cookie')).toContain('clawproxy_session=session-token');
+    expect(response.headers.get('set-cookie')).toContain('HttpOnly');
   });
 
-  test('root route delegates to handler.POST with empty path params', async () => {
-    const req = new Request('http://localhost/api/auth', { method: 'POST', body: '{}' });
-    const res = await rootPost(req);
+  test('sign-in returns 401 for bad credentials', async () => {
+    service.signInWithPassword.mockResolvedValue({ ok: false, error: 'Invalid email or password' });
 
-    expect(postSpy).toHaveBeenCalledTimes(1);
-    const [, ctx] = postSpy.mock.calls[0]!;
-    expect(await ctx.params).toEqual({ path: [] });
-    expect(res.status).toBe(200);
+    const response = await signIn(jsonRequest('/api/auth/sign-in', {
+      email: 'user@example.com',
+      password: 'wrong',
+    }));
+    const body = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(body).toEqual({ ok: false, error: 'Invalid email or password' });
+    expect(response.headers.get('set-cookie')).toBeNull();
   });
 
-  test('catch-all route exports the same handler methods', async () => {
-    const req = new Request('http://localhost/api/auth/callback/foo');
-    await catchAllGet(req);
-    expect(getSpy).toHaveBeenCalled();
+  test('rate limits repeated failed sign-in attempts by email', async () => {
+    rateLimit.checkAuthRateLimit.mockResolvedValue({ limited: true, retryAfterSeconds: 900 });
 
-    const req2 = new Request('http://localhost/api/auth/callback/foo', { method: 'POST' });
-    await catchAllPost(req2);
-    expect(postSpy).toHaveBeenCalled();
+    const response = await signIn(jsonRequest('/api/auth/sign-in', {
+      email: 'rate-limit@example.com',
+      password: 'wrong',
+    }, { 'x-forwarded-for': '203.0.113.10' }));
+    const body = await response.json();
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get('retry-after')).toBe('900');
+    expect(body).toEqual({ ok: false, error: 'Too many sign-in attempts' });
+    expect(service.signInWithPassword).not.toHaveBeenCalled();
+    expect(rateLimit.checkAuthRateLimit).toHaveBeenCalledWith(expect.objectContaining({
+      key: 'sign-in:rate-limit@example.com',
+      kind: 'sign-in',
+    }));
+  });
+
+  test('sign-up creates the user and signs them in', async () => {
+    service.signUpWithPassword.mockResolvedValue({
+      ok: true,
+      token: 'new-session',
+      expiresAt: new Date('2030-01-01T00:00:00Z'),
+      user: { id: 'user-2', email: 'new@example.com', name: 'New User' },
+    });
+
+    const response = await signUp(jsonRequest('/api/auth/sign-up', {
+      email: 'new@example.com',
+      password: 'long-enough',
+      name: 'New User',
+    }));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.data.user.email).toBe('new@example.com');
+    expect(service.signUpWithPassword).toHaveBeenCalledWith({
+      email: 'new@example.com',
+      password: 'long-enough',
+      name: 'New User',
+    });
+    expect(response.headers.get('set-cookie')).toContain('clawproxy_session=new-session');
+  });
+
+  test('sign-up returns 409 when the email already exists', async () => {
+    service.signUpWithPassword.mockResolvedValue({ ok: false, error: 'Email already exists', status: 409 });
+
+    const response = await signUp(jsonRequest('/api/auth/sign-up', {
+      email: 'taken@example.com',
+      password: 'long-enough',
+    }));
+    const body = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(body.error).toBe('Email already exists');
+  });
+
+  test('rate limits repeated sign-up attempts globally', async () => {
+    rateLimit.checkAuthRateLimit.mockResolvedValue({ limited: true, retryAfterSeconds: 900 });
+
+    const response = await signUp(jsonRequest('/api/auth/sign-up', {
+      email: 'blocked@example.com',
+      password: 'long-enough',
+    }, { 'x-forwarded-for': '203.0.113.20' }));
+    const body = await response.json();
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get('retry-after')).toBe('900');
+    expect(body).toEqual({ ok: false, error: 'Too many sign-up attempts' });
+    expect(service.signUpWithPassword).not.toHaveBeenCalled();
+    expect(rateLimit.checkAuthRateLimit).toHaveBeenCalledWith(expect.objectContaining({
+      key: 'sign-up:global',
+      kind: 'sign-up',
+    }));
+  });
+
+  test('forgot-password returns a neutral success response', async () => {
+    service.requestPasswordReset.mockResolvedValue({ ok: true });
+
+    const response = await forgotPassword(jsonRequest('/api/auth/forgot-password', {
+      email: 'maybe@example.com',
+    }));
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body).toEqual({ ok: true });
+    expect(service.requestPasswordReset).toHaveBeenCalledWith('maybe@example.com');
+  });
+
+  test('sign-out clears the session cookie', async () => {
+    service.signOutSession.mockResolvedValue({ ok: true });
+
+    const response = await signOut(new Request('http://localhost/api/auth/sign-out', {
+      method: 'POST',
+      headers: { cookie: 'clawproxy_session=old-token' },
+    }));
+
+    expect(response.status).toBe(200);
+    expect(service.signOutSession).toHaveBeenCalledWith('old-token');
+    expect(response.headers.get('set-cookie')).toContain('clawproxy_session=;');
   });
 });

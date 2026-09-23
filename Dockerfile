@@ -16,23 +16,13 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build-time env (Next inlines NEXT_PUBLIC_*; Neon Auth and DB modules load during `next build`).
-# NEON_AUTH_COOKIE_SECRET gets a placeholder because @neondatabase/auth validates
-# the 32-char minimum at import time during page-data collection; the real secret
-# is supplied at runtime via the container environment.
-ARG NEXT_PUBLIC_NEON_AUTH_BASE_URL
+# Build-time env. The app reads DATABASE_URL at runtime, but Next may evaluate server
+# modules during `next build`, so CI/Coolify builds should provide the same Postgres URL.
 ARG DATABASE_URL
-ARG NEON_AUTH_BASE_URL
-ARG NEON_AUTH_COOKIE_SECRET=build-time-placeholder-not-a-real-secret
+ENV DATABASE_URL=$DATABASE_URL
 
-ENV NEXT_PUBLIC_NEON_AUTH_BASE_URL=$NEXT_PUBLIC_NEON_AUTH_BASE_URL \
-    DATABASE_URL=$DATABASE_URL \
-    NEON_AUTH_BASE_URL=$NEON_AUTH_BASE_URL \
-    NEON_AUTH_COOKIE_SECRET=$NEON_AUTH_COOKIE_SECRET
-
-RUN test -n "$NEXT_PUBLIC_NEON_AUTH_BASE_URL" && test -n "$DATABASE_URL" && \
-    test -n "$NEON_AUTH_BASE_URL" || \
-    (echo "ERROR: Docker build requires --build-arg NEXT_PUBLIC_NEON_AUTH_BASE_URL, DATABASE_URL, NEON_AUTH_BASE_URL" >&2; exit 1)
+RUN test -n "$DATABASE_URL" || \
+    (echo "ERROR: Docker build requires --build-arg DATABASE_URL" >&2; exit 1)
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
@@ -44,13 +34,13 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-# DATABASE_URL must be supplied at container runtime (Neon dashboard connection string).
-# The build-time DATABASE_URL is only for `next build`; the app reads the env var when the server runs.
+# DATABASE_URL must be supplied at container runtime (Coolify Postgres connection string).
 
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
+COPY --from=builder /app/db/migrations ./db/migrations
 
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static

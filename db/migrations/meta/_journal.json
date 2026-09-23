@@ -29,6 +29,20 @@
       "when": 1790098916448,
       "tag": "0003_nodes_user_slug_namespace",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790123400000,
+      "tag": "0004_app_owned_auth",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790125200000,
+      "tag": "0005_auth_rate_limits",
+      "breakpoints": true
     }
   ]
 }

@@ -4,6 +4,7 @@ import next from 'next';
 import postgres from 'postgres';
 import { WebSocketServer, type WebSocket } from 'ws';
 
+import { applyCommittedMigrations } from './app/lib/db/migrations';
 import { markNodeSeen } from './app/lib/nodes/mark-seen';
 import { addConnection, removeConnection } from './app/lib/ws/connection-manager';
 import { createNodeSocketHandler } from './app/lib/ws/node-socket';
@@ -141,7 +142,10 @@ const handleNodeWebSocket = createNodeSocketHandler({
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
-app.prepare().then(() => {
+async function main() {
+  await applyCommittedMigrations(db);
+  await app.prepare();
+
   const httpServer = createServer((req, res) => {
     handle(req, res);
   });
@@ -164,4 +168,9 @@ app.prepare().then(() => {
   httpServer.listen(port, () => {
     console.log(`> Ready on http://${hostname}:${port}`);
   });
+}
+
+main().catch((error) => {
+  console.error('[server] failed to start', error);
+  process.exit(1);
 });

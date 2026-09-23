@@ -1,41 +1,46 @@
 'use client';
 
-function randomUuidFallback() {
-  return `${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
-}
+type AuthResult<T = unknown> =
+  | { data: T; error?: never }
+  | { data?: never; error: { message: string } };
 
-function ensureCryptoRandomUuid() {
-  const globalCrypto = globalThis.crypto as Crypto | undefined;
+async function postJson<T>(path: string, body: Record<string, unknown> = {}): Promise<AuthResult<T>> {
+  const response = await fetch(path, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
 
-  if (!globalCrypto) {
-    return;
+  const payload = (await response.json().catch(() => ({}))) as {
+    ok?: boolean;
+    data?: T;
+    error?: string;
+  };
+
+  if (!response.ok || payload.ok === false) {
+    return { error: { message: payload.error || 'Request failed' } };
   }
 
-  if (typeof globalCrypto.randomUUID !== 'function') {
-    Object.defineProperty(globalCrypto, 'randomUUID', {
-      value: randomUuidFallback,
-      configurable: true,
-    });
-  }
+  return { data: payload.data as T };
 }
 
-function getAuthBaseUrl() {
-  if (typeof window === 'undefined') {
-    const publicBaseUrl = process.env.NEXT_PUBLIC_NEON_AUTH_BASE_URL;
-
-    if (publicBaseUrl) {
-      return publicBaseUrl;
-    }
-
-    throw new Error('Neon Auth base URL is unavailable on the server');
-  }
-
-  return new URL('/api/auth', window.location.origin).toString();
-}
-
-export async function createNeonClientAuth() {
-  ensureCryptoRandomUuid();
-
-  const { createAuthClient } = await import('@neondatabase/auth');
-  return createAuthClient(getAuthBaseUrl());
+export async function createClientAuth() {
+  return {
+    signIn: {
+      email(input: { email: string; password: string }) {
+        return postJson('/api/auth/sign-in', input);
+      },
+    },
+    signUp: {
+      email(input: { email: string; password: string; name?: string }) {
+        return postJson('/api/auth/sign-up', input);
+      },
+    },
+    requestPasswordReset(input: { email: string; redirectTo?: string }) {
+      return postJson('/api/auth/forgot-password', input);
+    },
+    signOut() {
+      return postJson('/api/auth/sign-out');
+    },
+  };
 }

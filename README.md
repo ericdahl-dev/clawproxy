@@ -72,17 +72,13 @@ Nodes connect to `wss://<your-clawproxy-host>/api/nodes/ws` and authenticate imm
 ### Prerequisites
 
 - Node.js 22+
-- A [Neon](https://neon.tech) Postgres database
-- A [Neon Auth](https://neon.tech/docs/guides/neon-auth) project
+- A Postgres database (Coolify Postgres is the recommended production default)
 
 ### Environment variables
 
 | Variable | Required | Description |
 |---|---|---|
-| `DATABASE_URL` | Yes | Neon Postgres connection string |
-| `NEON_AUTH_BASE_URL` | Yes | Neon Auth base URL (server-side) |
-| `NEON_AUTH_COOKIE_SECRET` | Yes | Secret used to sign session cookies (min 32 chars) |
-| `NEXT_PUBLIC_NEON_AUTH_BASE_URL` | Yes | Neon Auth base URL (embedded in the client bundle at build time) |
+| `DATABASE_URL` | Yes | Postgres connection string (Coolify Postgres recommended) |
 | `ENCRYPTION_KEY` | Yes | 64-character hex string (32 bytes) used for AES-256-GCM encryption of sensitive fields at rest. Generate with: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
 
 Copy `.env.example` (if present) to `.env.local` and fill in the values before running locally.
@@ -138,11 +134,11 @@ The project ships with a multi-stage `Dockerfile` that produces a minimal produc
 
 **Build the image**
 
-`NEXT_PUBLIC_NEON_AUTH_BASE_URL` is baked into the client bundle at build time, so it must be passed as a build argument:
+Pass the database URL as a build argument because Next may evaluate server modules during `next build`:
 
 ```bash
 docker build \
-  --build-arg NEXT_PUBLIC_NEON_AUTH_BASE_URL=https://<your-neon-auth-url> \
+  --build-arg DATABASE_URL="postgresql://..." \
   -t clawproxy .
 ```
 
@@ -153,8 +149,7 @@ Pass runtime secrets as environment variables:
 ```bash
 docker run -p 3000:3000 \
   -e DATABASE_URL="postgresql://..." \
-  -e NEON_AUTH_BASE_URL="https://..." \
-  -e NEON_AUTH_COOKIE_SECRET="..." \
+  -e ENCRYPTION_KEY="$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")" \
   clawproxy
 ```
 
@@ -168,10 +163,8 @@ Set the following environment variables in your platform's dashboard before depl
 
 | Variable | Notes |
 |---|---|
-| `DATABASE_URL` | Neon Postgres connection string |
-| `NEON_AUTH_BASE_URL` | Neon Auth base URL |
-| `NEON_AUTH_COOKIE_SECRET` | Session cookie signing secret |
-| `NEXT_PUBLIC_NEON_AUTH_BASE_URL` | Must be set **before** the build runs so it is inlined into the client bundle |
+| `DATABASE_URL` | Postgres connection string (Coolify Postgres recommended) |
+| `ENCRYPTION_KEY` | 64-character hex encryption key for sensitive payload fields |
 
 Deploy with the Nixpacks CLI:
 

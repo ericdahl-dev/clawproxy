@@ -19,7 +19,7 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('@/app/lib/auth/client', () => ({
-  createNeonClientAuth: () => ({
+  createClientAuth: () => ({
     signOut: signOutMock,
   }),
 }));
