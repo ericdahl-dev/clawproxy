@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
 
-import { createNeonClientAuth } from '@/app/lib/auth/client';
+import { createClientAuth } from '@/app/lib/auth/client';
 
 export function useSignOut() {
   const router = useRouter();
@@ -15,7 +15,7 @@ export function useSignOut() {
     setError(null);
 
     try {
-      const auth = await createNeonClientAuth();
+      const auth = await createClientAuth();
       const result = await auth.signOut();
 
       if (result?.error) {

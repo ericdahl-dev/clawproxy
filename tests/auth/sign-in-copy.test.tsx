@@ -11,7 +11,7 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('@/app/lib/auth/client', () => ({
-  createNeonClientAuth: vi.fn(async () => ({ signIn: { email: vi.fn() } })),
+  createClientAuth: vi.fn(async () => ({ signIn: { email: vi.fn() } })),
 }));
 
 vi.mock('posthog-js', () => ({

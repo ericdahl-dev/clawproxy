@@ -1,25 +1,29 @@
-import { afterEach, describe, expect, test, vi } from 'vitest';
+import { NextRequest } from 'next/server';
+import { describe, expect, test } from 'vitest';
 
-const returnedMiddleware = { kind: 'neon-auth-middleware' as const };
-const middlewareSpy = vi.hoisted(() => vi.fn(() => returnedMiddleware));
+import proxy, { config } from '../proxy';
 
-vi.mock('@/app/lib/auth/server', () => ({
-  auth: {
-    middleware: (config: unknown) => middlewareSpy(config),
-  },
-}));
+describe('proxy dashboard guard', () => {
+  test('redirects dashboard requests without a session cookie', () => {
+    const request = new NextRequest('http://localhost/dashboard/nodes?tab=active');
 
-describe('proxy (Neon Auth middleware export)', () => {
-  afterEach(() => {
-    middlewareSpy.mockClear();
+    const response = proxy(request);
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get('location')).toBe(
+      'http://localhost/auth/sign-in?next=%2Fdashboard%2Fnodes%3Ftab%3Dactive'
+    );
+    expect(config.matcher).toEqual(['/dashboard/:path*']);
   });
 
-  test('configures middleware with dashboard login URL and matcher', async () => {
-    vi.resetModules();
-    const mod = await import('../proxy');
+  test('allows dashboard requests with a session cookie', () => {
+    const request = new NextRequest('http://localhost/dashboard', {
+      headers: { cookie: 'clawproxy_session=token' },
+    });
 
-    expect(middlewareSpy).toHaveBeenCalledWith({ loginUrl: '/auth/sign-in' });
-    expect(mod.default).toBe(returnedMiddleware);
-    expect(mod.config.matcher).toEqual(['/dashboard/:path*']);
+    const response = proxy(request);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('location')).toBeNull();
   });
 });

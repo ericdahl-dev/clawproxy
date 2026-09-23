@@ -19,6 +19,37 @@ export const eventStatusEnum = pgEnum('event_status', [
   'expired',
 ]);
 
+export const authUsers = pgTable(
+  'auth_users',
+  {
+    id: text('id').primaryKey(),
+    email: text('email').notNull(),
+    name: text('name').notNull(),
+    passwordHash: text('password_hash').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex('auth_users_email_key').on(table.email)]
+);
+
+export const authSessions = pgTable(
+  'auth_sessions',
+  {
+    id: text('id').primaryKey(),
+    tokenHash: text('token_hash').notNull(),
+    userId: text('user_id')
+      .notNull()
+      .references(() => authUsers.id, { onDelete: 'cascade' }),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex('auth_sessions_token_hash_key').on(table.tokenHash),
+    index('auth_sessions_user_id_idx').on(table.userId),
+    index('auth_sessions_expires_at_idx').on(table.expiresAt),
+  ]
+);
+
 export const nodes = pgTable(
   'nodes',
   {
@@ -89,6 +120,10 @@ export const events = pgTable(
   ]
 );
 
+export type AuthUser = typeof authUsers.$inferSelect;
+export type NewAuthUser = typeof authUsers.$inferInsert;
+export type AuthSession = typeof authSessions.$inferSelect;
+export type NewAuthSession = typeof authSessions.$inferInsert;
 export type Node = typeof nodes.$inferSelect;
 export type NewNode = typeof nodes.$inferInsert;
 export type Route = typeof routes.$inferSelect;

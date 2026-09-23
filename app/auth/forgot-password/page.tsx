@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { FormEvent, useState } from 'react';
 
-import { createNeonClientAuth } from '@/app/lib/auth/client';
+import { createClientAuth } from '@/app/lib/auth/client';
 import { useRedirect127ToLocalhost } from '@/app/lib/auth/dev-origin';
 import { AdminShell } from '@/components/app/admin-shell';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -27,7 +27,7 @@ export default function ForgotPasswordPage() {
     setSuccess(null);
 
     try {
-      const auth = await createNeonClientAuth();
+      const auth = await createClientAuth();
       const result = await auth.requestPasswordReset({
         email,
         redirectTo: '/auth/sign-in',

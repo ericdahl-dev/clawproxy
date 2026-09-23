@@ -10,14 +10,14 @@ globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 const pushMock = vi.fn();
 const refreshMock = vi.fn();
-const createNeonClientAuthMock = vi.hoisted(() => vi.fn());
+const createClientAuthMock = vi.hoisted(() => vi.fn());
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: pushMock, refresh: refreshMock }),
 }));
 
 vi.mock('@/app/lib/auth/client', () => ({
-  createNeonClientAuth: createNeonClientAuthMock,
+  createClientAuth: createClientAuthMock,
 }));
 
 vi.mock('@/app/lib/auth/dev-origin', () => ({
@@ -31,7 +31,7 @@ describe('SignUpPage', () => {
   beforeEach(() => {
     pushMock.mockClear();
     refreshMock.mockClear();
-    createNeonClientAuthMock.mockReset();
+    createClientAuthMock.mockReset();
     vi.useFakeTimers({ shouldAdvanceTime: true });
     container = document.createElement('div');
     document.body.appendChild(container);
@@ -76,10 +76,8 @@ describe('SignUpPage', () => {
 
   test('signs in and navigates to the dashboard on successful sign-up', async () => {
     const signUpEmail = vi.fn().mockResolvedValue({});
-    const signInEmail = vi.fn().mockResolvedValue({});
-    createNeonClientAuthMock.mockResolvedValue({
+    createClientAuthMock.mockResolvedValue({
       signUp: { email: signUpEmail },
-      signIn: { email: signInEmail },
     });
 
     const { default: SignUpPage } = await import('@/app/auth/sign-up/page');
@@ -103,17 +101,14 @@ describe('SignUpPage', () => {
       password: 'pw',
       name: 'Ada',
     });
-    // Bouncing a new account to the sign-in form read as failure; sign it in instead.
-    expect(signInEmail).toHaveBeenCalledWith({ email: 'ada@e.com', password: 'pw' });
     expect(pushMock).toHaveBeenCalledWith('/dashboard');
     expect(refreshMock).toHaveBeenCalled();
   });
 
   test('uses email as name when name is blank', async () => {
     const signUpEmail = vi.fn().mockResolvedValue({});
-    createNeonClientAuthMock.mockResolvedValue({
+    createClientAuthMock.mockResolvedValue({
       signUp: { email: signUpEmail },
-      signIn: { email: vi.fn().mockResolvedValue({}) },
     });
 
     const { default: SignUpPage } = await import('@/app/auth/sign-up/page');
@@ -140,9 +135,8 @@ describe('SignUpPage', () => {
 
   test('shows API error when signUp returns error', async () => {
     const signUpEmail = vi.fn().mockResolvedValue({ error: { message: 'Email taken' } });
-    createNeonClientAuthMock.mockResolvedValue({
+    createClientAuthMock.mockResolvedValue({
       signUp: { email: signUpEmail },
-      signIn: { email: vi.fn().mockResolvedValue({}) },
     });
 
     const { default: SignUpPage } = await import('@/app/auth/sign-up/page');
@@ -166,9 +160,8 @@ describe('SignUpPage', () => {
 
   test('shows message when signUp throws', async () => {
     const signUpEmail = vi.fn().mockRejectedValue(new Error('boom'));
-    createNeonClientAuthMock.mockResolvedValue({
+    createClientAuthMock.mockResolvedValue({
       signUp: { email: signUpEmail },
-      signIn: { email: vi.fn().mockResolvedValue({}) },
     });
 
     const { default: SignUpPage } = await import('@/app/auth/sign-up/page');

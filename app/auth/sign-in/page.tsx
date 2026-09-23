@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { FormEvent, Suspense, useState } from 'react';
 import posthog from 'posthog-js';
 
-import { createNeonClientAuth } from '@/app/lib/auth/client';
+import { createClientAuth } from '@/app/lib/auth/client';
 import { useRedirect127ToLocalhost } from '@/app/lib/auth/dev-origin';
 import { resolvePostSignInRedirect } from '@/app/lib/auth/post-sign-in-redirect';
 import { AdminShell } from '@/components/app/admin-shell';
@@ -39,7 +39,7 @@ function SignInForm() {
     setError(null);
 
     try {
-      const auth = await createNeonClientAuth();
+      const auth = await createClientAuth();
       const result = await auth.signIn.email({
         email,
         password,

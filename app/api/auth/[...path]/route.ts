@@ -1,3 +1,7 @@
-import { auth } from '@/app/lib/auth/server';
+export function GET() {
+  return Response.json({ ok: false, error: 'Unknown auth endpoint' }, { status: 404 });
+}
 
-export const { GET, POST } = auth.handler();
+export function POST() {
+  return Response.json({ ok: false, error: 'Unknown auth endpoint' }, { status: 404 });
+}

@@ -3,11 +3,10 @@ import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-const { mockPush, mockRefresh, mockSignUp, mockSignIn } = vi.hoisted(() => ({
+const { mockPush, mockRefresh, mockSignUp } = vi.hoisted(() => ({
   mockPush: vi.fn(),
   mockRefresh: vi.fn(),
   mockSignUp: vi.fn(),
-  mockSignIn: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -16,9 +15,8 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('@/app/lib/auth/client', () => ({
-  createNeonClientAuth: vi.fn(async () => ({
+  createClientAuth: vi.fn(async () => ({
     signUp: { email: mockSignUp },
-    signIn: { email: mockSignIn },
   })),
 }));
 
@@ -37,7 +35,6 @@ describe('sign-up', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSignUp.mockResolvedValue({ data: {} });
-    mockSignIn.mockResolvedValue({ data: {} });
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
@@ -68,15 +65,7 @@ describe('sign-up', () => {
     await submit();
 
     expect(mockSignUp).toHaveBeenCalled();
-    expect(mockSignIn).toHaveBeenCalled();
     expect(mockPush).toHaveBeenCalledWith('/dashboard');
   });
 
-  test('falls back to the sign-in page with a confirmation when auto sign-in fails', async () => {
-    mockSignIn.mockResolvedValue({ error: { message: 'nope' } });
-
-    await submit();
-
-    expect(mockPush).toHaveBeenCalledWith('/auth/sign-in?registered=1');
-  });
 });
