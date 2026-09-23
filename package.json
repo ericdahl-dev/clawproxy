@@ -16,6 +16,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:drift": "tsx scripts/schema-drift/check.ts",
+    "db:drift:seed-expected": "tsx scripts/schema-drift/apply-migrations.ts",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {

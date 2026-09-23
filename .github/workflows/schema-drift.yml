@@ -38,7 +38,7 @@ jobs:
       - name: Build the expected schema from committed migrations
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
-        run: yarn db:migrate
+        run: yarn db:drift:seed-expected
       - name: Compare production against it
         env:
           EXPECTED_DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres

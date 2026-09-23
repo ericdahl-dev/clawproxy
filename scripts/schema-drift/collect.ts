@@ -38,8 +38,12 @@ export async function collectSnapshot(databaseUrl: string): Promise<SchemaSnapsh
       ORDER BY tablename, indexname
     `) as unknown as IndexInfo[];
 
+    // The app's own migrator (app/lib/db/migrations.ts) tracks applied migrations in
+    // public.__clawproxy_migrations, not drizzle's own drizzle.__drizzle_migrations table
+    // (that table only exists when `drizzle-kit migrate` was run directly against a DB,
+    // which production never does).
     const migrationRows = await sql<{ hash: string }[]>`
-      SELECT hash FROM drizzle.__drizzle_migrations ORDER BY created_at, id
+      SELECT hash FROM public.__clawproxy_migrations ORDER BY applied_at, name
     `;
 
     return {
