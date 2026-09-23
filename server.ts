@@ -22,10 +22,16 @@ const PING_INTERVAL_MS = 30_000;
 const SEEN_THROTTLE_MS = 60_000;
 const WS_PATH = '/api/nodes/ws';
 
+function sslMode(): 'require' | false {
+  const mode = process.env.DATABASE_SSL?.trim().toLowerCase();
+  if (mode === 'disable' || mode === 'false') return false;
+  return 'require';
+}
+
 function createDb() {
   const url = process.env.DATABASE_URL?.trim();
   if (!url) throw new Error('DATABASE_URL is not set');
-  return postgres(url, { ssl: 'require' });
+  return postgres(url, { ssl: sslMode() });
 }
 
 const db = createDb();
