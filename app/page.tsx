@@ -163,6 +163,10 @@ export default function Home() {
 
             <p className="mt-5 max-w-2xl text-sm leading-6 text-muted-foreground">
               Works with Hermes Agent, OpenClaw, and any client that can receive events from an authenticated outbound connection.
+              {' '}
+              <Link href="/hermes" className="text-brand-accent underline-offset-4 hover:underline">
+                Using Hermes?
+              </Link>
             </p>
           </div>
 

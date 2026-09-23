@@ -23,4 +23,11 @@ describe('landing page copy', () => {
     expect(html).toContain('OpenClaw');
     expect(html).not.toContain('private OpenClaw nodes');
   });
+
+  test('includes a contextual entry point for Hermes users', async () => {
+    const html = await landingHtml();
+
+    expect(html).toContain('href="/hermes"');
+    expect(html).toContain('Using Hermes?');
+  });
 });
