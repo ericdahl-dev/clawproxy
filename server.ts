@@ -5,6 +5,7 @@ import postgres from 'postgres';
 import { WebSocketServer, type WebSocket } from 'ws';
 
 import { applyCommittedMigrations } from './app/lib/db/migrations';
+import { postgresSslOption } from './app/lib/db-config';
 import { markNodeSeen } from './app/lib/nodes/mark-seen';
 import { addConnection, removeConnection } from './app/lib/ws/connection-manager';
 import { createNodeSocketHandler } from './app/lib/ws/node-socket';
@@ -25,7 +26,7 @@ const WS_PATH = '/api/nodes/ws';
 function createDb() {
   const url = process.env.DATABASE_URL?.trim();
   if (!url) throw new Error('DATABASE_URL is not set');
-  return postgres(url, { ssl: 'require' });
+  return postgres(url, { ssl: postgresSslOption(url) });
 }
 
 const db = createDb();

@@ -11,7 +11,7 @@ describe('app/lib/db bootstrap', () => {
 
   beforeEach(() => {
     postgresMock.mockClear();
-    process.env.DATABASE_URL = 'postgres://user:pass@localhost:5432/testdb';
+    process.env.DATABASE_URL = 'postgres://user:***@localhost:5432/testdb';
   });
 
   afterEach(() => {
@@ -23,13 +23,25 @@ describe('app/lib/db bootstrap', () => {
     }
   });
 
-  test('opens a postgres connection with ssl require when DATABASE_URL is set', async () => {
+  test('opens a postgres connection with ssl require when DATABASE_URL is a Neon host', async () => {
+    process.env.DATABASE_URL = 'postgres://user:***@ep-example.us-east-2.aws.neon.tech/testdb';
     vi.resetModules();
     await import('@/app/lib/db');
     await import('@/app/lib/db/client');
 
-    expect(postgresMock).toHaveBeenCalledWith('postgres://user:pass@localhost:5432/testdb', {
-      ssl: 'require',
+    expect(postgresMock).toHaveBeenCalledWith(
+      'postgres://user:***@ep-example.us-east-2.aws.neon.tech/testdb',
+      { ssl: 'require' }
+    );
+  });
+
+  test('opens a postgres connection without ssl for a local/coolify host', async () => {
+    vi.resetModules();
+    await import('@/app/lib/db');
+    await import('@/app/lib/db/client');
+
+    expect(postgresMock).toHaveBeenCalledWith('postgres://user:***@localhost:5432/testdb', {
+      ssl: false,
     });
   });
 
