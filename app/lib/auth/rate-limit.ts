@@ -53,6 +53,12 @@ export async function recordAuthRateLimitAttempt({
   const windowStart = new Date();
   const expiredBefore = new Date(windowStart.getTime() - windowMs);
 
+  // postgres.js cannot serialize a raw Date interpolated into a `sql` fragment
+  // (only drizzle's column-typed bindings get mapped), so pre-stringify the
+  // timestamps and cast them back to timestamptz inside the statement.
+  const windowStartParam = sql`${windowStart.toISOString()}::timestamptz`;
+  const expiredBeforeParam = sql`${expiredBefore.toISOString()}::timestamptz`;
+
   await db
     .insert(authRateLimits)
     .values({ key, kind, count: 1, windowStart, updatedAt: windowStart })
@@ -60,8 +66,8 @@ export async function recordAuthRateLimitAttempt({
       target: authRateLimits.key,
       set: {
         kind,
-        count: sql<number>`case when ${authRateLimits.windowStart} <= ${expiredBefore} then 1 else ${authRateLimits.count} + 1 end`,
-        windowStart: sql<Date>`case when ${authRateLimits.windowStart} <= ${expiredBefore} then ${windowStart} else ${authRateLimits.windowStart} end`,
+        count: sql<number>`case when ${authRateLimits.windowStart} <= ${expiredBeforeParam} then 1 else ${authRateLimits.count} + 1 end`,
+        windowStart: sql<Date>`case when ${authRateLimits.windowStart} <= ${expiredBeforeParam} then ${windowStartParam} else ${authRateLimits.windowStart} end`,
         updatedAt: windowStart,
       },
     });
