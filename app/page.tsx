@@ -167,6 +167,10 @@ export default function Home() {
               <Link href="/hermes" className="text-brand-accent underline-offset-4 hover:underline">
                 Using Hermes?
               </Link>
+              {' '}
+              <Link href="/openclaw" className="text-brand-accent underline-offset-4 hover:underline">
+                Using OpenClaw?
+              </Link>
             </p>
           </div>
 
