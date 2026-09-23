@@ -11,7 +11,15 @@ posthog.init(process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN!, {
   debug: process.env.NODE_ENV === 'development',
 });
 
-const sentryOptions = buildSentryOptions('client');
+// These must be written as literal `process.env.X` expressions: that is the
+// only form Next substitutes when building the client bundle. Reading them
+// dynamically leaves `undefined` in the browser and silently disables Sentry.
+const sentryOptions = buildSentryOptions('client', {
+  NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  NODE_ENV: process.env.NODE_ENV,
+  SENTRY_ENVIRONMENT: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT,
+  SENTRY_RELEASE: process.env.NEXT_PUBLIC_SENTRY_RELEASE,
+});
 
 Sentry.init({
   enabled: sentryOptions.enabled,
