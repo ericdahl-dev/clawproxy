@@ -31,7 +31,7 @@ const setupSteps = [
 const snippetLines = [
   'OPENCLAW_WEBHOOK_RELAY_URL=wss://clawproxy.io/api/nodes/ws',
   'OPENCLAW_WEBHOOK_NODE_TOKEN=cpn_your_node_token',
-  'OPENCLAW_WEBHOOK_ROUTE_URL=https://clawproxy.io/api/ingress/github-to-openclaw',
+  'OPENCLAW_WEBHOOK_ROUTE_URL=https://clawproxy.io/api/ingress/<user-id>/github-to-openclaw',
 ];
 
 export const dynamic = 'force-dynamic';
@@ -113,7 +113,9 @@ export default function OpenClawLandingPage() {
                 <div className="flex items-start justify-between gap-5">
                   <div>
                     <p className="font-mono text-xs text-muted-foreground">openclaw route</p>
-                    <p className="mt-1.5 font-mono text-sm text-brand-accent">/api/ingress/github-to-openclaw</p>
+                    <p className="mt-1.5 font-mono text-sm text-brand-accent">
+                      /api/ingress/&lt;user-id&gt;/github-to-openclaw
+                    </p>
                   </div>
                   <p className="rounded-full border border-brand-accent/35 bg-brand-accent/10 px-3 py-1 font-mono text-[11px] text-brand-accent">
                     queued
@@ -164,8 +166,9 @@ export default function OpenClawLandingPage() {
               Wire OpenClaw to clawproxy in minutes.
             </h2>
             <p className="mt-5 max-w-xl text-base leading-7 text-muted-foreground">
-              Start with one route, verify delivery, then add more provider workflows without changing
-              how your OpenClaw node reaches the public internet.
+              Start with one dashboard-generated route URL that includes your user id, verify delivery,
+              then add more provider workflows without changing how your OpenClaw node reaches the
+              public internet.
             </p>
           </div>
 

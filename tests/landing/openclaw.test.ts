@@ -25,6 +25,10 @@ describe('OpenClaw landing page', () => {
 
     expect(html).toContain('OPENCLAW_WEBHOOK_RELAY_URL');
     expect(html).toContain('wss://clawproxy.io/api/nodes/ws');
+    expect(html).toContain('https://clawproxy.io/api/ingress/&lt;user-id&gt;/github-to-openclaw');
+    expect(html).toContain('/api/ingress/&lt;user-id&gt;/github-to-openclaw');
+    expect(html).toContain('dashboard-generated route URL that includes your user id');
+    expect(html).not.toContain('https://clawproxy.io/api/ingress/github-to-openclaw');
     expect(html).toContain('GitHub, Stripe, and Slack webhooks');
     expect(html).toContain('OpenClaw node');
     expect(html).toContain('outbound WebSocket');
