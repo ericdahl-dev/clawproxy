@@ -7,7 +7,14 @@ const service = vi.hoisted(() => ({
   requestPasswordReset: vi.fn(),
 }));
 
+const rateLimit = vi.hoisted(() => ({
+  checkAuthRateLimit: vi.fn(),
+  recordAuthRateLimitAttempt: vi.fn(),
+  clearAuthRateLimit: vi.fn(),
+}));
+
 vi.mock('@/app/lib/auth/server', () => service);
+vi.mock('@/app/lib/auth/rate-limit', () => rateLimit);
 
 import { POST as forgotPassword } from '@/app/api/auth/forgot-password/route';
 import { POST as signIn } from '@/app/api/auth/sign-in/route';
@@ -29,6 +36,9 @@ function jsonRequest(
 describe('first-party auth API routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    rateLimit.checkAuthRateLimit.mockResolvedValue({ limited: false, retryAfterSeconds: 0 });
+    rateLimit.recordAuthRateLimitAttempt.mockResolvedValue(undefined);
+    rateLimit.clearAuthRateLimit.mockResolvedValue(undefined);
   });
 
   test('sign-in creates an httpOnly session cookie on success', async () => {
@@ -66,16 +76,8 @@ describe('first-party auth API routes', () => {
     expect(response.headers.get('set-cookie')).toBeNull();
   });
 
-  test('rate limits repeated failed sign-in attempts by IP and email', async () => {
-    service.signInWithPassword.mockResolvedValue({ ok: false, error: 'Invalid email or password' });
-
-    for (let attempt = 0; attempt < 5; attempt += 1) {
-      const response = await signIn(jsonRequest('/api/auth/sign-in', {
-        email: 'rate-limit@example.com',
-        password: 'wrong',
-      }, { 'x-forwarded-for': '203.0.113.10' }));
-      expect(response.status).toBe(401);
-    }
+  test('rate limits repeated failed sign-in attempts by email', async () => {
+    rateLimit.checkAuthRateLimit.mockResolvedValue({ limited: true, retryAfterSeconds: 900 });
 
     const response = await signIn(jsonRequest('/api/auth/sign-in', {
       email: 'rate-limit@example.com',
@@ -86,7 +88,11 @@ describe('first-party auth API routes', () => {
     expect(response.status).toBe(429);
     expect(response.headers.get('retry-after')).toBe('900');
     expect(body).toEqual({ ok: false, error: 'Too many sign-in attempts' });
-    expect(service.signInWithPassword).toHaveBeenCalledTimes(5);
+    expect(service.signInWithPassword).not.toHaveBeenCalled();
+    expect(rateLimit.checkAuthRateLimit).toHaveBeenCalledWith(expect.objectContaining({
+      key: 'sign-in:rate-limit@example.com',
+      kind: 'sign-in',
+    }));
   });
 
   test('sign-up creates the user and signs them in', async () => {
@@ -127,16 +133,8 @@ describe('first-party auth API routes', () => {
     expect(body.error).toBe('Email already exists');
   });
 
-  test('rate limits repeated sign-up attempts by IP', async () => {
-    service.signUpWithPassword.mockResolvedValue({ ok: false, error: 'Email already exists', status: 409 });
-
-    for (let attempt = 0; attempt < 5; attempt += 1) {
-      const response = await signUp(jsonRequest('/api/auth/sign-up', {
-        email: `attempt-${attempt}@example.com`,
-        password: 'long-enough',
-      }, { 'x-forwarded-for': '203.0.113.20' }));
-      expect(response.status).toBe(409);
-    }
+  test('rate limits repeated sign-up attempts globally', async () => {
+    rateLimit.checkAuthRateLimit.mockResolvedValue({ limited: true, retryAfterSeconds: 900 });
 
     const response = await signUp(jsonRequest('/api/auth/sign-up', {
       email: 'blocked@example.com',
@@ -147,7 +145,11 @@ describe('first-party auth API routes', () => {
     expect(response.status).toBe(429);
     expect(response.headers.get('retry-after')).toBe('900');
     expect(body).toEqual({ ok: false, error: 'Too many sign-up attempts' });
-    expect(service.signUpWithPassword).toHaveBeenCalledTimes(5);
+    expect(service.signUpWithPassword).not.toHaveBeenCalled();
+    expect(rateLimit.checkAuthRateLimit).toHaveBeenCalledWith(expect.objectContaining({
+      key: 'sign-up:global',
+      kind: 'sign-up',
+    }));
   });
 
   test('forgot-password returns a neutral success response', async () => {

@@ -50,6 +50,18 @@ export const authSessions = pgTable(
   ]
 );
 
+export const authRateLimits = pgTable(
+  'auth_rate_limits',
+  {
+    key: text('key').primaryKey(),
+    kind: text('kind').notNull(),
+    count: integer('count').notNull().default(0),
+    windowStart: timestamp('window_start', { withTimezone: true }).notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('auth_rate_limits_kind_idx').on(table.kind)]
+);
+
 export const nodes = pgTable(
   'nodes',
   {
@@ -124,6 +136,8 @@ export type AuthUser = typeof authUsers.$inferSelect;
 export type NewAuthUser = typeof authUsers.$inferInsert;
 export type AuthSession = typeof authSessions.$inferSelect;
 export type NewAuthSession = typeof authSessions.$inferInsert;
+export type AuthRateLimit = typeof authRateLimits.$inferSelect;
+export type NewAuthRateLimit = typeof authRateLimits.$inferInsert;
 export type Node = typeof nodes.$inferSelect;
 export type NewNode = typeof nodes.$inferInsert;
 export type Route = typeof routes.$inferSelect;

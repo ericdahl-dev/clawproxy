@@ -10,6 +10,8 @@ import { authSessions, authUsers, type AuthUser } from '@/db/schema';
 import { hashPassword, passwordHashNeedsUpgrade, verifyPassword } from './password';
 
 const SESSION_DAYS = 30;
+const DUMMY_PASSWORD_HASH =
+  'scrypt$131072$8$1$dummy-salt-for-timing$fDgBd3ILD0ghTJFckvLC1-phtr7co3c23O1kYvq2ANBoDZ5LAmfnYfcPBBbitkQi99ooA9wKzPdRR8yKL7EjYQ';
 
 export type AppAuthUser = Pick<AuthUser, 'id' | 'email' | 'name'>;
 
@@ -102,7 +104,12 @@ export async function signInWithPassword(
   const email = normalizeEmail(emailInput);
   const [user] = await db.select().from(authUsers).where(eq(authUsers.email, email)).limit(1);
 
-  if (!user || !(await verifyPassword(password, user.passwordHash))) {
+  if (!user) {
+    await verifyPassword(password, DUMMY_PASSWORD_HASH);
+    return { ok: false, error: 'Invalid email or password', status: 401 };
+  }
+
+  if (!(await verifyPassword(password, user.passwordHash))) {
     return { ok: false, error: 'Invalid email or password', status: 401 };
   }
 
