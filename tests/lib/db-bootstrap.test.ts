@@ -33,6 +33,17 @@ describe('app/lib/db bootstrap', () => {
     });
   });
 
+  test('disables ssl when DATABASE_SSL=disable (internal/private Postgres)', async () => {
+    process.env.DATABASE_SSL = 'disable';
+    vi.resetModules();
+    await import('@/app/lib/db');
+
+    expect(postgresMock).toHaveBeenCalledWith('postgres://user:pass@localhost:5432/testdb', {
+      ssl: false,
+    });
+    delete process.env.DATABASE_SSL;
+  });
+
   test('throws when DATABASE_URL is missing', async () => {
     delete process.env.DATABASE_URL;
     vi.resetModules();
