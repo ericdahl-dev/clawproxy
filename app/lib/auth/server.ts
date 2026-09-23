@@ -7,7 +7,7 @@ import { cookies } from 'next/headers';
 import { db } from '@/app/lib/db/client';
 import { SESSION_COOKIE_NAME } from './constants';
 import { authSessions, authUsers, type AuthUser } from '@/db/schema';
-import { hashPassword, verifyPassword } from './password';
+import { hashPassword, passwordHashNeedsUpgrade, verifyPassword } from './password';
 
 const SESSION_DAYS = 30;
 
@@ -104,6 +104,13 @@ export async function signInWithPassword(
 
   if (!user || !(await verifyPassword(password, user.passwordHash))) {
     return { ok: false, error: 'Invalid email or password', status: 401 };
+  }
+
+  if (passwordHashNeedsUpgrade(user.passwordHash)) {
+    await db
+      .update(authUsers)
+      .set({ passwordHash: await hashPassword(password), updatedAt: new Date() })
+      .where(eq(authUsers.id, user.id));
   }
 
   return createSession(user);

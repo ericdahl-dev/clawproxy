@@ -1,7 +1,7 @@
 import { randomBytes, scrypt as scryptCallback, timingSafeEqual, type ScryptOptions } from 'node:crypto';
 
 const KEY_LENGTH = 64;
-const SCRYPT_PARAMS = { N: 16384, r: 8, p: 1 } as const;
+const SCRYPT_PARAMS = { N: 131072, r: 8, p: 1, maxmem: 256 * 1024 * 1024 } as const;
 
 function scrypt(password: string, salt: string, keyLength: number, options: ScryptOptions) {
   return new Promise<Buffer>((resolve, reject) => {
@@ -25,6 +25,18 @@ export async function hashPassword(password: string): Promise<string> {
   ].join('$');
 }
 
+export function passwordHashNeedsUpgrade(storedHash: string): boolean {
+  const parts = storedHash.split('$');
+  if (parts.length !== 6 || parts[0] !== 'scrypt') return true;
+
+  const [, nRaw, rRaw, pRaw] = parts;
+  return (
+    Number(nRaw) < SCRYPT_PARAMS.N ||
+    Number(rRaw) !== SCRYPT_PARAMS.r ||
+    Number(pRaw) !== SCRYPT_PARAMS.p
+  );
+}
+
 export async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
   const parts = storedHash.split('$');
   if (parts.length !== 6 || parts[0] !== 'scrypt') return false;
@@ -39,7 +51,12 @@ export async function verifyPassword(password: string, storedHash: string): Prom
 
   try {
     const expected = Buffer.from(expectedRaw, 'base64url');
-    const actual = (await scrypt(password, salt, expected.length, { N, r, p })) as Buffer;
+    const actual = (await scrypt(password, salt, expected.length, {
+      N,
+      r,
+      p,
+      maxmem: Math.max(SCRYPT_PARAMS.maxmem, 128 * N * r + 1024 * 1024),
+    })) as Buffer;
     return expected.length === actual.length && timingSafeEqual(expected, actual);
   } catch {
     return false;

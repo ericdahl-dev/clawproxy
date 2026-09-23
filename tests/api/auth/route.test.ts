@@ -14,10 +14,14 @@ import { POST as signIn } from '@/app/api/auth/sign-in/route';
 import { POST as signOut } from '@/app/api/auth/sign-out/route';
 import { POST as signUp } from '@/app/api/auth/sign-up/route';
 
-function jsonRequest(path: string, body: Record<string, unknown>) {
+function jsonRequest(
+  path: string,
+  body: Record<string, unknown>,
+  extraHeaders: Record<string, string> = {}
+) {
   return new Request(`http://localhost${path}`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...extraHeaders },
     body: JSON.stringify(body),
   });
 }
@@ -62,6 +66,29 @@ describe('first-party auth API routes', () => {
     expect(response.headers.get('set-cookie')).toBeNull();
   });
 
+  test('rate limits repeated failed sign-in attempts by IP and email', async () => {
+    service.signInWithPassword.mockResolvedValue({ ok: false, error: 'Invalid email or password' });
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const response = await signIn(jsonRequest('/api/auth/sign-in', {
+        email: 'rate-limit@example.com',
+        password: 'wrong',
+      }, { 'x-forwarded-for': '203.0.113.10' }));
+      expect(response.status).toBe(401);
+    }
+
+    const response = await signIn(jsonRequest('/api/auth/sign-in', {
+      email: 'rate-limit@example.com',
+      password: 'wrong',
+    }, { 'x-forwarded-for': '203.0.113.10' }));
+    const body = await response.json();
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get('retry-after')).toBe('900');
+    expect(body).toEqual({ ok: false, error: 'Too many sign-in attempts' });
+    expect(service.signInWithPassword).toHaveBeenCalledTimes(5);
+  });
+
   test('sign-up creates the user and signs them in', async () => {
     service.signUpWithPassword.mockResolvedValue({
       ok: true,
@@ -98,6 +125,29 @@ describe('first-party auth API routes', () => {
 
     expect(response.status).toBe(409);
     expect(body.error).toBe('Email already exists');
+  });
+
+  test('rate limits repeated sign-up attempts by IP', async () => {
+    service.signUpWithPassword.mockResolvedValue({ ok: false, error: 'Email already exists', status: 409 });
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const response = await signUp(jsonRequest('/api/auth/sign-up', {
+        email: `attempt-${attempt}@example.com`,
+        password: 'long-enough',
+      }, { 'x-forwarded-for': '203.0.113.20' }));
+      expect(response.status).toBe(409);
+    }
+
+    const response = await signUp(jsonRequest('/api/auth/sign-up', {
+      email: 'blocked@example.com',
+      password: 'long-enough',
+    }, { 'x-forwarded-for': '203.0.113.20' }));
+    const body = await response.json();
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get('retry-after')).toBe('900');
+    expect(body).toEqual({ ok: false, error: 'Too many sign-up attempts' });
+    expect(service.signUpWithPassword).toHaveBeenCalledTimes(5);
   });
 
   test('forgot-password returns a neutral success response', async () => {
