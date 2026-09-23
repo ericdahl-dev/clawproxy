@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
 import { db } from '@/app/lib/db/client';
 import { authRateLimits } from '@/db/schema';
@@ -50,24 +50,21 @@ export async function recordAuthRateLimitAttempt({
   kind,
   windowMs,
 }: Omit<AuthRateLimitOptions, 'maxAttempts'>) {
-  const [entry] = await db.select().from(authRateLimits).where(eq(authRateLimits.key, key)).limit(1);
   const windowStart = new Date();
-
-  if (!entry || nowMs() - entry.windowStart.getTime() >= windowMs) {
-    await db
-      .insert(authRateLimits)
-      .values({ key, kind, count: 1, windowStart, updatedAt: windowStart })
-      .onConflictDoUpdate({
-        target: authRateLimits.key,
-        set: { kind, count: 1, windowStart, updatedAt: windowStart },
-      });
-    return;
-  }
+  const expiredBefore = new Date(windowStart.getTime() - windowMs);
 
   await db
-    .update(authRateLimits)
-    .set({ count: entry.count + 1, updatedAt: windowStart })
-    .where(eq(authRateLimits.key, key));
+    .insert(authRateLimits)
+    .values({ key, kind, count: 1, windowStart, updatedAt: windowStart })
+    .onConflictDoUpdate({
+      target: authRateLimits.key,
+      set: {
+        kind,
+        count: sql<number>`case when ${authRateLimits.windowStart} <= ${expiredBefore} then 1 else ${authRateLimits.count} + 1 end`,
+        windowStart: sql<Date>`case when ${authRateLimits.windowStart} <= ${expiredBefore} then ${windowStart} else ${authRateLimits.windowStart} end`,
+        updatedAt: windowStart,
+      },
+    });
 }
 
 export async function clearAuthRateLimit(key: string) {
