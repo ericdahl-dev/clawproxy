@@ -18,10 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      DATABASE_URL: postgresql://user:password@example.com/neondb?sslmode=require
-      NEON_AUTH_BASE_URL: https://example.neon.tech/neondb/auth
-      NEXT_PUBLIC_NEON_AUTH_BASE_URL: https://example.neon.tech/neondb/auth
-      NEON_AUTH_COOKIE_SECRET: test-test-test-test-test-test-test-test
+      DATABASE_URL: postgresql://user:password@example.com/clawproxy
+      ENCRYPTION_KEY: '0000000000000000000000000000000000000000000000000000000000000000'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,7 +28,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: yarn
 
       - name: Enable Corepack (Yarn from packageManager)
         run: corepack enable
@@ -63,9 +60,6 @@ jobs:
           context: .
           push: false
           build-args: |
-            NEXT_PUBLIC_NEON_AUTH_BASE_URL=https://example.neon.tech/neondb/auth
-            DATABASE_URL=postgresql://user:password@example.com/neondb?sslmode=require
-            NEON_AUTH_BASE_URL=https://example.neon.tech/neondb/auth
-            NEON_AUTH_COOKIE_SECRET=test-test-test-test-test-test-test-test
+            DATABASE_URL=postgresql://user:password@example.com/clawproxy
           cache-from: type=gha
           cache-to: type=gha,mode=max
