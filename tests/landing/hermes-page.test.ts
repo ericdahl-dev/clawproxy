@@ -19,7 +19,13 @@ describe("Hermes landing page", () => {
     const html = await hermesHtml();
     const dom = new JSDOM(html);
     const document = dom.window.document;
-    expect(document.querySelector("code")?.textContent).toContain("hermes config set webhooks.relay_url");
+    const snippet = document.querySelector("pre code")?.textContent ?? "";
+    expect(snippet).toContain("hermes plugins install ericdahl-dev/clawproxy-hermes");
+    expect(snippet).toContain("CLAWPROXY_NODE_TOKEN=cpn_your_node_token");
+    expect(snippet).toContain("CLAWPROXY_HERMES_WEBHOOK_SECRET=");
+    expect(snippet).toContain("clawproxy.io/api/ingress/<userId>/<routeSlug>");
+    expect(snippet).not.toContain("/api/ingress/hermes");
+    expect(snippet).not.toContain("webhooks.relay_url");
     expect(document.querySelector("a[href=\"/dashboard\"]")?.textContent).toContain("Create a route");
     expect(document.querySelector("a[href=\"https://github.com/ericdahl-dev/clawproxy-hermes\"]")?.textContent).toContain("Hermes plugin");
   });
