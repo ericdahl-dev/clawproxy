@@ -30,7 +30,7 @@ app/
   api/
     ingress/[routeSlug]/    # Public webhook ingestion endpoint
     nodes/pull/             # Node event polling endpoint
-    nodes/ack/              # Node event acknowledgement endpoint
+    nodes/ack/              # Node event acknowledgment endpoint
     admin/                  # Admin API routes (events, nodes, routes)
     auth/                   # Auth-related API routes
     version/                # Version endpoint

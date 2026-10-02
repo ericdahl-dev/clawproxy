@@ -48,7 +48,7 @@ export default async function DashboardEventsPage() {
       <DashboardPageHeader
         eyebrow="Events"
         title="Delivery events"
-        description="Inspect queued webhook deliveries, acknowledgements, and failures."
+        description="Inspect queued webhook deliveries, acknowledgments, and failures."
       />
 
       <EventsClient

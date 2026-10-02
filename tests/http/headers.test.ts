@@ -20,7 +20,7 @@ describe('headersToObject', () => {
     expect(result['x-custom-header']).toBe('value');
   });
 
-  test('normalises header names to lowercase', () => {
+  test('normalizes header names to lowercase', () => {
     const headers = new Headers();
     headers.append('X-Request-ID', 'abc-123');
 
