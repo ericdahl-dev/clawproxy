@@ -1,0 +1,4 @@
+# Words and paths the American-spelling check accepts (scripts/american_spelling.py in ericdahl-dev/.github).
+
+# Vendored Yarn release binary, checked in by `yarn set version`; not our code.
+path: .yarn/releases/

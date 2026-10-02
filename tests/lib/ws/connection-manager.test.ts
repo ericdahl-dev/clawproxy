@@ -48,7 +48,7 @@ describe('connection-manager', () => {
     expect(isConnected('node-1')).toBe(false);
   });
 
-  test('pushEventToNode sends serialised data to the WebSocket', async () => {
+  test('pushEventToNode sends serialized data to the WebSocket', async () => {
     const { addConnection, pushEventToNode } = await import(
       '@/app/lib/ws/connection-manager'
     );
@@ -81,7 +81,7 @@ describe('connection-manager', () => {
     expect(mockSend).not.toHaveBeenCalled();
   });
 
-  test('global map is initialised on first import if not present', async () => {
+  test('global map is initialized on first import if not present', async () => {
     global.__clawproxyWsConnections = undefined;
     await import('@/app/lib/ws/connection-manager');
     expect(global.__clawproxyWsConnections).toBeInstanceOf(Map);

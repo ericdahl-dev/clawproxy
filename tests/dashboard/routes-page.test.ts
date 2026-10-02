@@ -51,7 +51,7 @@ describe('dashboard routes page', () => {
     mockDbRoutesOrderBy.mockResolvedValue([]);
     mockDbNodesOrderBy.mockReset();
     mockDbNodesOrderBy.mockResolvedValue([{ id: 'node-1', name: 'My Node' }]);
-    // Restore the routes/nodes alternating behaviour on from()
+    // Restore the routes/nodes alternating behavior on from()
     mockDbSelectFrom.mockReset();
     mockDbSelectFrom
       .mockReturnValueOnce({ leftJoin: mockDbRoutesLeftJoin })
